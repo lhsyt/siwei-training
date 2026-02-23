@@ -427,6 +427,7 @@
         <div class="report-close" onclick="closeReport()">×</div>
         <img id="report-img" class="report-img" alt="Report">
         <div class="report-tip">长按图片保存 -> 秀出你的逻辑</div>
+        <button id="btn-download-img" onclick="downloadReportImg()" style="margin-top:12px;padding:10px 28px;background:var(--gold);color:#000;border:none;border-radius:8px;font-size:0.85rem;font-weight:700;cursor:pointer;">📥 保存图片到手机</button>
     </div>
     <canvas id="canvas-buffer" width="1080" height="1440"></canvas>
 
@@ -570,6 +571,7 @@
                 html += `<button class="btn-guide" onclick="generateGuideResult()">✨ 合并生成我的向导宣言</button>`;
                 html += `<div class="guide-result" id="guide-result"><div class="guide-result-label">📄 我的向导宣言</div><div class="guide-result-text" id="guide-result-text"></div></div>`;
                 html += `<button class="btn-guide-copy" id="btn-guide-copy" onclick="copyGuideResult()">📋 复制全文，发到群里</button>`;
+                html += `<button class="btn-report" onclick="generateGuideImage()" style="margin-top:12px;">📸 生成向导宣言海报</button>`;
             }
 
             container.innerHTML = html;
@@ -645,26 +647,104 @@
                 return;
             }
 
-            const prompt = `我正在参加《结构化表达实战营》，请你扮演一位高情商、逻辑清晰的沟通教练。
+            let prompt = '';
+            const taskDesc = dayData.task.replace(/\n/g, " ");
 
-【今日生活场景】：${dayData.title}
-【任务要求】：${dayData.task.replace(/\n/g, " ")}
+            if (activeWeekId === 1) {
+                // Week 1: SCQA 观点训练
+                prompt = `你是一位结构化表达教练。我正在练习用SCQA框架说清楚一件事。
 
-【我的口述/初稿】：
+【今日场景】：${dayData.title}
+【任务要求】：${taskDesc}
+
+【我的初稿】：
 ${inputVal}
 
-【请帮我做两件事（不要讲大道理，直接上干货）】：
+请帮我做三件事（直接上干货，不要讲道理）：
 
-1. 🩺 逻辑诊断：
-   - 我说清楚了吗？
-   - 是否符合今日的技巧（比如有没有用上SCQA，或者逻辑顺不顺）？
-   - 给我打个分（0-10分）。
+1. 🔍 要素拆解：
+   我的表达里，S(情境)、C(冲突)、A(答案) 分别是哪句话？
+   如果有缺失或表达不清的，直接指出。
 
-2. ✨ 高情商/高逻辑重写（演示）：
-   - 请运用结构化思维（SCQA/总分总/类比），帮我把这段话重写一遍。
-   - 要求：口语化、自然、能直接发朋友圈或直接说给别人听。
+2. 🎯 最弱环节：
+   哪个要素最薄弱？给我一个具体的修改方向（不要帮我重写整段，只点出方向）。
+
+3. ❓ 追问：
+   问我一个问题，让我把最弱的部分想得更清楚，我自己再改一版。
 
 请直接输出结果。`;
+            } else if (activeWeekId === 2) {
+                // Week 2: 结构逻辑训练
+                prompt = `你是一位结构化表达教练。我正在练习让表达更有逻辑、更有条理。
+
+【今日场景】：${dayData.title}
+【任务要求】：${taskDesc}
+
+【我的初稿】：
+${inputVal}
+
+请帮我做三件事（直接上干货，不要讲道理）：
+
+1. 🔍 结构扫描：
+   我用了什么结构（总分总/正反论证/时间顺序/并列分类）？
+   结构完整吗？有没有逻辑断裂或跑偏的地方？
+
+2. 🎯 砍一刀：
+   指出一句"说了等于没说"的废话，或者逻辑最弱的地方。告诉我怎么调整方向（不要帮我重写整段）。
+
+3. ❓ 读者视角：
+   如果一个完全不了解背景的人听到这段话，他最可能问的第一个问题是什么？
+
+请直接输出结果。`;
+            } else if (activeWeekId === 3) {
+                // Week 3: 洞察高级训练
+                prompt = `你是一位表达教练，擅长帮人提炼洞察和金句。我正在练习让表达更有画面感和深度。
+
+【今日场景】：${dayData.title}
+【任务要求】：${taskDesc}
+
+【我的初稿】：
+${inputVal}
+
+请帮我做三件事（直接上干货，不要讲道理）：
+
+1. 🔍 画面感检测：
+   读完我写的，脑子里能"看到"一个具体场景吗？
+   如果太抽象，指出哪里需要更具体的细节。
+
+2. 🎯 深度测试：
+   我说的是"正确的废话"（谁都知道的道理），还是有真实洞察？
+   如果不够深，告诉我可以往哪个方向再挖一层（不要帮我重写整段）。
+
+3. ❓ 反转挑战：
+   给我一个反面视角或反例，让我重新审视自己的观点，看能不能说得更扎实。
+
+请直接输出结果。`;
+            } else {
+                // Week 4: 结营项目
+                prompt = `你是一位品牌定位教练。我正在完成结营项目——写出"我能帮谁解决什么问题"。
+
+【当前步骤】：${dayData.title}
+【任务要求】：${taskDesc}
+
+【我写的内容】：
+${inputVal}
+
+请你模拟一个完全不认识我的陌生人，读完后做三件事：
+
+1. 👤 陌生人视角：
+   - 我看完知道你在帮什么样的人吗？（具体还是模糊？）
+   - 能感受到你真的理解这类人吗？（真实还是套话？）
+   - 有没有觉得"这说的好像就是我"？
+
+2. 🎯 改一个地方：
+   如果只能改一处，你建议我改哪里？给方向就行，不用帮我重写。
+
+3. ❓ 帮我挖更深：
+   问我一个问题，让我把这个人的画像想得更具体、更真实。
+
+请直接输出结果。`;
+            }
 
             document.getElementById('ai-prompt-text').innerText = prompt;
             document.getElementById('ai-box').style.display = 'block';
@@ -773,6 +853,24 @@ ${inputVal}
         }
 
         function closeReport() { document.getElementById('report-overlay').classList.remove('show'); }
+
+        function downloadReportImg() {
+            var img = document.getElementById('report-img');
+            var link = document.createElement('a');
+            link.download = '思维训练营-' + new Date().toISOString().slice(0,10) + '.png';
+            link.href = img.src;
+            // iOS Safari 不支持 download 属性，用 blob URL 尝试
+            if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
+                // iOS: 尝试打开新窗口让用户手动保存
+                var w = window.open('');
+                if (w) { w.document.write('<img src="' + img.src + '" style="width:100%">'); w.document.title = '长按图片保存'; }
+                else { alert('请长按上方图片，选择"保存图片"'); }
+                return;
+            }
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
         
         function wrapText(context, text, x, y, maxWidth, lineHeight) {
             const paragraphs = text.split('\n'); let currentY = y;
@@ -851,6 +949,213 @@ ${inputVal}
             setTimeout(function() {
                 document.getElementById('guide-result').scrollIntoView({ behavior: 'smooth', block: 'start' });
             }, 100);
+        }
+
+        function generateGuideImage() {
+            var t1 = (userInputs[22] || '').trim();
+            var t2 = (userInputs[23] || '').trim();
+            var t3 = (userInputs[24] || '').trim();
+            if (t1.length < 10 || t2.length < 10 || t3.length < 10) {
+                alert('⚠️ 先完成三个步骤并生成向导宣言，再来生成海报。');
+                return;
+            }
+            var r1 = (userRevisions[22] || '').trim();
+            var r2 = (userRevisions[23] || '').trim();
+            var r3 = (userRevisions[24] || '').trim();
+            var hasV2 = (r1.length > 10 || r2.length > 10 || r3.length > 10);
+            // 如果没有进化版，提示用户
+            if (!hasV2) {
+                if (!confirm("⚠️ 建议把 AI 改好的版本填在【进化版】里再生成海报，对比效果更好。\n\n是否坚持只生成初稿版？")) return;
+            }
+
+            var FONT = "'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif";
+            var canvas = document.getElementById('canvas-buffer');
+            var W = 1080;
+            var maxTextW = W - 220;
+            var fontSize = 30;
+            var lineH = 48;
+            var subLabelH = 50;
+            var secGap = 35;
+
+            var secs = [
+                { num: "01", label: "我的英雄", v1: t1, v2: r1.length > 10 ? r1 : '', color: "#60a5fa", colorDim: "rgba(96,165,250,0.06)" },
+                { num: "02", label: "我是向导", v1: t2, v2: r2.length > 10 ? r2 : '', color: "#a78bfa", colorDim: "rgba(167,139,250,0.06)" },
+                { num: "03", label: "新生活", v1: t3, v2: r3.length > 10 ? r3 : '', color: "#fbbf24", colorDim: "rgba(251,191,36,0.06)" }
+            ];
+
+            // === 测量文字高度的工具函数 ===
+            function measureTextH(mCtx, text) {
+                var textH = 0;
+                var paragraphs = text.split('\n');
+                paragraphs.forEach(function(para) {
+                    var line = ''; var chars = para.split('');
+                    for (var n = 0; n < chars.length; n++) {
+                        var test = line + chars[n];
+                        if (mCtx.measureText(test).width > maxTextW && n > 0) {
+                            line = chars[n]; textH += lineH;
+                        } else { line = test; }
+                    }
+                    textH += lineH * 1.3;
+                });
+                return textH;
+            }
+
+            // === Pass 1: 测量每段总高度 ===
+            canvas.width = W; canvas.height = 100;
+            var mCtx = canvas.getContext('2d');
+            mCtx.font = fontSize + "px " + FONT;
+
+            var secHeights = [];
+            secs.forEach(function(sec) {
+                var stepLabelH = 70;
+                var v1H = subLabelH + measureTextH(mCtx, sec.v1) + 15;
+                var v2H = sec.v2 ? (subLabelH + measureTextH(mCtx, sec.v2) + 15) : 0;
+                var dividerH = sec.v2 ? 30 : 0;
+                var total = stepLabelH + v1H + dividerH + v2H + 40;
+                secHeights.push(Math.max(total, 200));
+            });
+
+            // === 计算画布高度 ===
+            var headerH = 280;
+            var footerH = 130;
+            var contentH = 0;
+            secHeights.forEach(function(h) { contentH += h; });
+            contentH += secGap * (secs.length - 1);
+            var H = headerH + contentH + footerH;
+            H = Math.max(H, 1200);
+
+            // === Pass 2: 绘制 ===
+            canvas.width = W; canvas.height = H;
+            var ctx = canvas.getContext('2d');
+
+            // 背景
+            var grd = ctx.createLinearGradient(0, 0, 0, H);
+            grd.addColorStop(0, "#0f172a"); grd.addColorStop(0.5, "#1a1035"); grd.addColorStop(1, "#020617");
+            ctx.fillStyle = grd; ctx.fillRect(0, 0, W, H);
+            ctx.strokeStyle = "rgba(148,163,184,0.06)"; ctx.lineWidth = 1;
+            for (var i = 0; i < H; i += 60) { ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(W,i); ctx.stroke(); }
+
+            // 标题
+            ctx.fillStyle = "#a78bfa"; ctx.font = "bold 36px " + FONT;
+            ctx.fillText("GUIDE  DECLARATION", 80, 80);
+            ctx.fillStyle = "#ffffff"; ctx.font = "900 72px " + FONT;
+            ctx.fillText("我的向导宣言", 80, 180);
+            var barGrd = ctx.createLinearGradient(80, 0, 400, 0);
+            barGrd.addColorStop(0, "#3b82f6"); barGrd.addColorStop(1, "#8b5cf6");
+            ctx.fillStyle = barGrd; ctx.fillRect(80, 215, 280, 6);
+
+            // === 绘制文字块的工具函数 ===
+            function drawTextBlock(ctx, text, x, startY, color) {
+                ctx.fillStyle = color;
+                ctx.font = fontSize + "px " + FONT;
+                var textY = startY;
+                var paragraphs = text.split('\n');
+                paragraphs.forEach(function(para) {
+                    var line = ''; var chars = para.split('');
+                    for (var n = 0; n < chars.length; n++) {
+                        var test = line + chars[n];
+                        if (ctx.measureText(test).width > maxTextW && n > 0) {
+                            ctx.fillText(line, x, textY);
+                            line = chars[n]; textY += lineH;
+                        } else { line = test; }
+                    }
+                    ctx.fillText(line, x, textY);
+                    textY += lineH * 1.3;
+                });
+                return textY;
+            }
+
+            // === 三段内容 ===
+            var currentY = headerH;
+            var padLeft = 100;
+
+            secs.forEach(function(sec, idx) {
+                var thisH = secHeights[idx];
+
+                // 面板背景
+                ctx.fillStyle = sec.colorDim;
+                roundRect(ctx, 60, currentY, W - 120, thisH, 16);
+                ctx.fill();
+
+                // 左侧色条
+                ctx.fillStyle = sec.color;
+                roundRect(ctx, 60, currentY, 6, thisH, 3);
+                ctx.fill();
+
+                // 大编号水印
+                ctx.globalAlpha = 0.04;
+                ctx.fillStyle = sec.color;
+                ctx.font = "900 200px " + FONT;
+                ctx.fillText(sec.num, W - 320, currentY + 180);
+                ctx.globalAlpha = 1;
+
+                // STEP 标签
+                ctx.fillStyle = sec.color;
+                ctx.font = "bold 34px " + FONT;
+                ctx.fillText("STEP " + sec.num + " · " + sec.label, padLeft, currentY + 48);
+
+                var textY = currentY + 80;
+
+                // 📝 初稿标签
+                ctx.fillStyle = "#94a3b8";
+                ctx.font = "bold 26px " + FONT;
+                ctx.fillText("📝 初稿", padLeft, textY + 30);
+                textY += subLabelH + 10;
+
+                // 初稿正文（灰色调）
+                textY = drawTextBlock(ctx, sec.v1, padLeft, textY, "#8896a8");
+
+                // 如果有进化版
+                if (sec.v2) {
+                    textY += 5;
+                    // 分隔线
+                    ctx.strokeStyle = "rgba(148,163,184,0.15)";
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(padLeft, textY);
+                    ctx.lineTo(W - padLeft, textY);
+                    ctx.stroke();
+                    textY += 25;
+
+                    // 🏆 进化版标签
+                    ctx.fillStyle = "#fcd34d";
+                    ctx.font = "bold 26px " + FONT;
+                    ctx.fillText("🏆 进化版", padLeft, textY);
+                    textY += subLabelH;
+
+                    // 进化版正文（高亮白色）
+                    drawTextBlock(ctx, sec.v2, padLeft, textY, "#f1f5f9");
+                }
+
+                currentY += thisH + secGap;
+            });
+
+            // 底部
+            ctx.fillStyle = "rgba(148,163,184,0.3)";
+            ctx.fillRect(80, H - 90, W - 160, 1);
+            ctx.fillStyle = "#64748b"; ctx.font = "28px " + FONT;
+            ctx.fillText("#思维进化训练营 · 结营项目", 80, H - 45);
+            ctx.fillStyle = "#475569"; ctx.font = "24px " + FONT;
+            var rightText = "知识土匪 · CANOE";
+            ctx.fillText(rightText, W - 80 - ctx.measureText(rightText).width, H - 45);
+
+            document.getElementById('report-img').src = canvas.toDataURL("image/png");
+            document.getElementById('report-overlay').classList.add('show');
+            canvas.width = 1080; canvas.height = 1440;
+        }
+
+        function roundRect(ctx, x, y, w, h, r) {
+            ctx.beginPath();
+            ctx.moveTo(x + r, y);
+            ctx.lineTo(x + w - r, y);
+            ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+            ctx.lineTo(x + w, y + h - r);
+            ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+            ctx.lineTo(x + r, y + h);
+            ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+            ctx.lineTo(x, y + r);
+            ctx.quadraticCurveTo(x, y, x + r, y);
+            ctx.closePath();
         }
 
         function copyGuideResult() {
