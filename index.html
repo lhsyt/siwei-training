@@ -467,39 +467,14 @@
             };
         })();
 
-        // ===== 邀请码验证 =====
-        const VALID_CODE = 'LOGIC-2026';
-        const GATE_KEY = 'zhouzhou_logic_gate';
-
-        function verifyCode() {
-            const input = document.getElementById('gate-input');
-            const errorEl = document.getElementById('gate-error');
-            const code = input.value.trim().toUpperCase();
-
-            input.classList.remove('error');
-            errorEl.classList.remove('show');
-
-            if (code === VALID_CODE) {
-                LS.set(GATE_KEY, '1');
-                unlockContent();
-            } else {
-                input.classList.add('error');
-                errorEl.classList.add('show');
-                errorEl.innerText = '邀请码无效，请检查后重试';
-            }
-        }
-
+        // ===== 邀请码验证（已关闭）=====
         function unlockContent() {
             document.getElementById('gate').style.display = 'none';
             document.getElementById('main-content').style.display = 'block';
         }
 
-        // 页面加载时检查是否已验证
-        (function checkGate() {
-            if (LS.get(GATE_KEY) === '1') {
-                unlockContent();
-            }
-        })();
+        // 直接进入，不需要邀请码
+        unlockContent();
 
         // === 核心数据 ===
         const syllabus = {
