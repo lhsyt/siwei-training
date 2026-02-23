@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>思维进化训练营 | Logic Master</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;800&family=Noto+Sans+SC:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #050505;
+            --card-bg: #121212;
+            --text-main: #ffffff;
+            --text-sub: #888888;
+            --accent-blue: #3b82f6; 
+            --accent-purple: #8b5cf6;
+            --glow: rgba(59, 130, 246, 0.6);
+            --gold: #f59e0b;
+            --input-bg: #1a1a1a;
+            --border: #2a2a2a;
+            --danger: #ef4444;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+        
+        body {
+            font-family: 'Noto Sans SC', -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "WenQuanYi Micro Hei", sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+        }
+
+        /* 背景氛围光 */
+        body::before {
+            content: ''; position: fixed; top: -20%; left: 50%; transform: translateX(-50%);
+            width: 120%; height: 60%; 
+            background: radial-gradient(circle, rgba(59,130,246,0.15) 0%, rgba(0,0,0,0) 70%);
+            pointer-events: none; z-index: -1;
+        }
+
+        .container { width: 100%; max-width: 600px; padding: 20px 16px 80px; }
+
+        /* === 1. Hero 头部 (保持 v12) === */
+        .hero-section {
+            text-align: center; margin-bottom: 30px; margin-top: 20px;
+        }
+        
+        .hero-subtitle {
+            color: var(--accent-blue);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem; letter-spacing: 2px; font-weight: 800;
+            text-transform: uppercase; margin-bottom: 12px;
+            text-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+        }
+
+        .hero-title {
+            font-size: 2.2rem; line-height: 1.2; font-weight: 900; margin-bottom: 16px;
+            color: #fff;
+        }
+        .hero-title .highlight {
+            background: linear-gradient(90deg, #60a5fa 0%, #a78bfa 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            font-size: 2.4rem; display: block; margin-top: 4px;
+        }
+
+        .hero-desc {
+            font-size: 0.85rem; color: var(--text-sub); margin-bottom: 24px;
+            line-height: 1.6; padding: 0 20px;
+        }
+
+        /* 进度条 */
+        .progress-box {
+            padding: 0 10px;
+        }
+        .progress-header {
+            display: flex; justify-content: space-between; font-size: 0.75rem; 
+            color: var(--text-sub); margin-bottom: 8px; font-weight: 600;
+        }
+        .progress-track {
+            background: #1f1f1f; height: 12px; border-radius: 6px; overflow: hidden;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+        }
+        .progress-fill {
+            height: 100%; background: linear-gradient(90deg, var(--accent-blue), #8b5cf6);
+            width: 0%; transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+            box-shadow: 0 0 10px rgba(139, 92, 246, 0.4);
+        }
+
+        /* === 2. 圆形 Tab 导航 === */
+        .nav-tabs {
+            display: flex; justify-content: space-between; gap: 12px; margin-bottom: 24px; margin-top: 10px;
+        }
+        .nav-item {
+            flex: 1; background: #161616; border: 1px solid #2a2a2a;
+            border-radius: 16px; padding: 16px 0; cursor: pointer;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: all 0.3s; position: relative; overflow: hidden;
+        }
+        .nav-item.active {
+            background: var(--accent-blue); border-color: var(--accent-blue);
+            box-shadow: 0 4px 20px rgba(59, 130, 246, 0.4);
+        }
+        .nav-item.active .tab-week { color: rgba(255,255,255,0.8); }
+        .nav-item.active .tab-num { color: #fff; }
+
+        .tab-week { font-size: 0.7rem; font-weight: 700; color: #666; margin-bottom: 4px; text-transform: uppercase; }
+        .tab-num { font-size: 1.4rem; font-weight: 900; color: #fff; font-family: 'JetBrains Mono'; line-height: 1; }
+
+        /* === 3. 导语卡片 === */
+        .week-banner {
+            background: linear-gradient(145deg, #1a1a2e, #16213e);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            border-radius: 16px; padding: 24px; margin-bottom: 24px;
+            position: relative; overflow: hidden;
+            animation: slideUp 0.4s ease-out;
+        }
+        .week-banner::after {
+            content: ''; position: absolute; right: -10px; bottom: -30px;
+            width: 100px; height: 100px; background: rgba(59, 130, 246, 0.1);
+            border-radius: 50%; filter: blur(20px);
+        }
+        .banner-tag {
+            background: rgba(255,255,255,0.1); color: #a5b4fc; padding: 4px 8px;
+            border-radius: 4px; font-size: 0.7rem; font-weight: 700; display: inline-block; margin-bottom: 12px;
+        }
+        .banner-title { font-size: 1.3rem; font-weight: 800; color: #fff; margin-bottom: 8px; }
+        .banner-desc { font-size: 0.85rem; color: #94a3b8; line-height: 1.5; }
+
+        /* 任务列表 */
+        .grid { display: grid; gap: 12px; display: none; }
+        .grid.active { display: grid; animation: fadeIn 0.5s; }
+        
+        .card {
+            background: #111; border: 1px solid #222; border-radius: 12px;
+            padding: 18px; cursor: pointer; display: flex; align-items: center; justify-content: space-between;
+            transition: all 0.2s; position: relative;
+        }
+        .card:active { transform: scale(0.98); background: #1a1a1a; }
+        .card-left { display: flex; align-items: center; gap: 15px; }
+        
+        .day-badge {
+            font-family: 'JetBrains Mono'; font-size: 0.75rem; color: #666; font-weight: 700;
+            background: #1a1a1a; padding: 6px 8px; border-radius: 6px; min-width: 60px; text-align: center;
+        }
+        .card.completed .day-badge { background: rgba(16, 185, 129, 0.2); color: var(--success); }
+        .card-title { font-size: 1rem; font-weight: 600; color: #eee; }
+        .check-icon {
+            width: 24px; height: 24px; border: 2px solid #444; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; transition: all 0.2s;
+        }
+        .card.completed .check-icon { border-color: var(--success); background: var(--success); }
+        .card.completed .check-icon::after { content: '✓'; color: #000; font-weight: 900; font-size: 14px; }
+
+        /* Footer (Updated with Reset) */
+        footer { margin-top: 60px; text-align: center; padding-top: 30px; border-top: 1px solid #222; padding-bottom: 30px; }
+        
+        .data-btn-group { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .pill-btn {
+            background: #1a1a1a; border: 1px solid #333; color: #ccc;
+            padding: 10px 20px; border-radius: 30px; font-size: 0.85rem; font-weight: 600;
+            cursor: pointer; display: flex; align-items: center; gap: 6px; transition: 0.2s;
+        }
+        .pill-btn:active { background: #222; transform: scale(0.95); }
+        
+        /* 危险按钮样式 */
+        .danger-zone { margin-top: 25px; margin-bottom: 15px; }
+        .btn-reset {
+            background: transparent; border: 1px solid #ef4444; color: #ef4444;
+            padding: 8px 16px; border-radius: 30px; font-size: 0.75rem; font-weight: 600;
+            cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: 0.2s; opacity: 0.7;
+        }
+        .btn-reset:hover { opacity: 1; background: rgba(239, 68, 68, 0.1); }
+        
+        .copyright { font-size: 0.7rem; color: #444; letter-spacing: 1px; }
+
+        /* 邀请码页面 */
+        .gate {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #050505;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            z-index: 999; padding: 30px;
+        }
+        .gate-logo {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem; font-weight: 800;
+            color: #3b82f6; letter-spacing: 3px;
+            text-transform: uppercase; margin-bottom: 28px;
+            text-shadow: 0 0 10px rgba(59,130,246,0.5);
+        }
+        .gate-title {
+            font-size: 1.5rem; font-weight: 900;
+            color: #fff; text-align: center;
+            margin-bottom: 10px; line-height: 1.3;
+        }
+        .gate-desc {
+            font-size: 0.85rem; color: #666;
+            text-align: center; margin-bottom: 32px; line-height: 1.6;
+        }
+        .gate-input {
+            width: 100%; max-width: 320px;
+            background: #111; border: 1px solid #333;
+            border-radius: 12px; padding: 16px 18px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1rem; color: #fff;
+            text-align: center; letter-spacing: 3px;
+            outline: none; margin-bottom: 14px;
+            transition: border-color 0.2s;
+        }
+        .gate-input:focus { border-color: #3b82f6; }
+        .gate-input.error { border-color: #ef4444; animation: shake 0.3s ease; }
+        .gate-btn {
+            width: 100%; max-width: 320px;
+            padding: 15px; border-radius: 12px;
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+            color: #fff; font-size: 0.95rem; font-weight: 800;
+            border: none; cursor: pointer;
+            transition: opacity 0.2s, transform 0.2s;
+        }
+        .gate-btn:active { transform: scale(0.97); opacity: 0.9; }
+        .gate-error {
+            font-size: 0.8rem; color: #ef4444;
+            margin-top: 12px; text-align: center; display: none;
+        }
+        .gate-error.show { display: block; }
+        @keyframes shake {
+            0%,100% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            75% { transform: translateX(8px); }
+        }
+
+        /* Modal Styles */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); backdrop-filter: blur(8px); z-index: 100; display: none; justify-content: center; align-items: end; opacity: 0; transition: opacity 0.3s; }
+        .modal-overlay.open { display: flex; opacity: 1; }
+        .modal-content { background: #161616; width: 100%; max-width: 600px; height: 92vh; border-radius: 24px 24px 0 0; border-top: 1px solid #333; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 -10px 40px rgba(0,0,0,0.8); }
+        .modal-header { padding: 20px 24px; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center; }
+        .modal-title { font-size: 1.2rem; font-weight: 800; color: #fff; font-family: 'JetBrains Mono'; }
+        .close-btn { background: none; border: none; color: #666; font-size: 28px; padding: 0; cursor: pointer; }
+        .modal-body { flex: 1; overflow-y: auto; padding: 24px; padding-bottom: 60px; }
+        .section-label { font-size: 0.75rem; color: var(--accent-blue); font-weight: 800; text-transform: uppercase; margin: 24px 0 10px; letter-spacing: 1px; }
+        .section-label:first-child { margin-top: 0; }
+        .task-box { background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.2); padding: 16px; border-radius: 12px; color: #e2e8f0; font-size: 0.95rem; line-height: 1.6; }
+        .example-box { background: #0a0a0a; padding: 16px; border-radius: 12px; margin-top: 12px; font-size: 0.85rem; border-left: 3px solid var(--gold); }
+        .homework-area, .revision-area { width: 100%; min-height: 150px; background: #0a0a0a; color: #fff; border: 1px solid #333; border-radius: 12px; padding: 16px; font-family: inherit; font-size: 16px; line-height: 1.6; resize: none; outline: none; margin-bottom: 8px; }
+        .homework-area:focus, .revision-area:focus { border-color: var(--accent-blue); }
+        .revision-area { background: #1a1500; border-color: rgba(245, 158, 11, 0.3); }
+        .revision-area:focus { border-color: var(--gold); }
+        .ai-prompt-box { background: #0d1117; border: 1px dashed #30363d; padding: 16px; border-radius: 12px; margin-top: 20px; display: none; }
+        .ai-prompt-content { font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: #8b949e; white-space: pre-wrap; line-height: 1.5; max-height: 150px; overflow-y: auto; }
+        .btn-ai-gen { background: linear-gradient(90deg, #3b82f6, #8b5cf6); border: none; color: white; padding: 14px; border-radius: 12px; font-size: 0.95rem; font-weight: 700; width: 100%; margin-top: 15px; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; }
+        .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+        .btn-secondary { background: #21262d; color: #c9d1d9; border: 1px solid #30363d; padding: 10px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.85rem; }
+        .btn-report { background: linear-gradient(90deg, #f59e0b, #d97706); color: #000; border: none; padding: 14px; border-radius: 12px; font-size: 1rem; font-weight: 800; width: 100%; margin-top: 30px; cursor: pointer; }
+        .report-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 200; display: none; flex-direction: column; align-items: center; justify-content: center; }
+        .report-overlay.show { display: flex; }
+        .report-img { max-width: 90%; max-height: 80vh; border-radius: 12px; border: 1px solid #333; }
+        .report-close { position: absolute; top: 20px; right: 20px; color: #fff; font-size: 30px; cursor: pointer; z-index: 201; }
+        .report-tip { color: var(--gold); margin-top: 20px; font-size: 0.8rem; font-weight: 600; animation: pulse 2s infinite; }
+        #canvas-buffer { display: none; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { transform: translateY(10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
+
+        /* 微信提示横幅 */
+        .wechat-tip {
+            display: none;
+            position: fixed; top: 0; left: 0; width: 100%; z-index: 9999;
+            background: #f0a500; color: #000;
+            padding: 14px 16px;
+            font-size: 14px; font-weight: 700;
+            text-align: center; line-height: 1.5;
+            -webkit-box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+        .wechat-tip.show { display: block; }
+
+        /* textarea 统一 16px 防 iOS 自动缩放 */
+        textarea { font-size: 16px !important; }
+
+        /* 结营项目样式 */
+        .grad-section { background: linear-gradient(145deg, #0f1729, #0d1320); border: 1px solid rgba(59,130,246,0.15); border-radius: 16px; padding: 24px; margin-top: 20px; margin-bottom: 16px; }
+        .grad-section-title { font-size: 0.75rem; font-weight: 800; color: var(--gold); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px; display: flex; align-items: center; gap: 6px; }
+        .grad-example-block { background: rgba(0,0,0,0.3); border-left: 3px solid var(--gold); border-radius: 0 8px 8px 0; padding: 14px 16px; margin-bottom: 12px; font-size: 0.85rem; color: #cbd5e1; line-height: 1.8; }
+        .grad-example-block:last-child { margin-bottom: 0; }
+        .grad-step-label { font-size: 0.7rem; color: var(--gold); font-weight: 700; margin-bottom: 6px; }
+        .grad-standard { background: #0f1a0f; border: 1px solid rgba(16,185,129,0.2); border-radius: 16px; padding: 24px; margin-bottom: 16px; }
+        .grad-standard-title { font-size: 0.75rem; font-weight: 800; color: #10b981; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px; }
+        .grad-standard-item { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 12px; font-size: 0.88rem; color: #94a3b8; line-height: 1.6; }
+        .grad-standard-item:last-child { margin-bottom: 0; }
+        .grad-standard-dot { width: 6px; height: 6px; background: #10b981; border-radius: 50%; margin-top: 8px; flex-shrink: 0; }
+        .btn-guide { width: 100%; padding: 16px; border-radius: 14px; font-size: 1rem; font-weight: 800; cursor: pointer; border: none; background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple)); color: #fff; margin-top: 20px; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; gap: 8px; transition: opacity 0.2s, transform 0.2s; }
+        .btn-guide:active { transform: scale(0.98); opacity: 0.9; }
+        .guide-result { background: #0a0a0a; border: 1px solid #2a2a2a; border-radius: 14px; padding: 20px; margin-bottom: 16px; display: none; }
+        .guide-result.show { display: block; animation: fadeIn 0.4s ease; }
+        .guide-result-label { font-size: 0.7rem; font-weight: 800; color: var(--accent-purple); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+        .guide-result-text { font-size: 0.92rem; color: #e2e8f0; line-height: 1.9; white-space: pre-line; }
+        .btn-guide-copy { width: 100%; padding: 14px; border-radius: 14px; font-size: 0.95rem; font-weight: 700; cursor: pointer; border: 1px solid #333; background: #1a1a1a; color: #ccc; display: none; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s; margin-bottom: 16px; }
+        .btn-guide-copy:active { background: #222; transform: scale(0.98); }
+        .grad-deadline { background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.25); border-radius: 12px; padding: 14px 18px; display: flex; align-items: center; gap: 10px; margin-top: 20px; margin-bottom: 16px; font-size: 0.85rem; color: var(--gold); font-weight: 600; }
+    </style>
+</head>
+<body>
+
+<!-- 微信内打开提示 -->
+<div class="wechat-tip" id="wechat-tip">
+    ⚠️ 请点右上角「···」→「在浏览器打开」，功能才能正常使用
+</div>
+
+<!-- 邀请码验证页 -->
+<div class="gate" id="gate">
+    <div class="gate-logo">🧠 思维进化训练营</div>
+    <div class="gate-title">专属学员<br>请验证身份</div>
+    <div class="gate-desc">请输入你的邀请码<br>邀请码由舟舟在群里发放</div>
+    <input class="gate-input" id="gate-input" type="text" placeholder="输入邀请码" maxlength="12"
+        oninput="this.value=this.value.toUpperCase()"
+        onkeydown="if(event.key==='Enter')verifyCode()">
+    <button class="gate-btn" onclick="verifyCode()">进入训练营 →</button>
+    <div class="gate-error" id="gate-error">邀请码无效，请检查后重试</div>
+</div>
+
+    <div class="container" id="main-content" style="display:none">
+        <div class="hero-section">
+            <div class="hero-subtitle">21-DAY EVOLUTION</div>
+            <div class="hero-title">
+                从“语无伦次”到<span class="highlight">“逻辑大神”</span>
+            </div>
+            <div class="hero-desc">
+                21天思维表达进化训练营：先说人话，再说结构，最后洞察。
+            </div>
+            
+            <div class="progress-box">
+                <div class="progress-header">
+                    <span>总进度</span>
+                    <span id="progress-text">0%</span>
+                </div>
+                <div class="progress-track">
+                    <div class="progress-fill" id="progress-bar"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="nav-tabs">
+            <div class="nav-item active" onclick="switchWeek(1)" id="tab-1">
+                <div class="tab-week">Week</div>
+                <div class="tab-num">1</div>
+            </div>
+            <div class="nav-item" onclick="switchWeek(2)" id="tab-2">
+                <div class="tab-week">Week</div>
+                <div class="tab-num">2</div>
+            </div>
+            <div class="nav-item" onclick="switchWeek(3)" id="tab-3">
+                <div class="tab-week">Week</div>
+                <div class="tab-num">3</div>
+            </div>
+            <div class="nav-item" onclick="switchWeek(4)" id="tab-4">
+                <div class="tab-week">Final</div>
+                <div class="tab-num">🎓</div>
+            </div>
+        </div>
+
+        <div id="week-banner" class="week-banner">
+            </div>
+
+        <div id="content-area"></div>
+    </div>
+
+    <footer>
+        <div class="data-btn-group">
+            <button class="pill-btn" onclick="copyDataString(this)">
+                <span style="color:#f59e0b">📋</span> 备份进度
+            </button>
+            <button class="pill-btn" onclick="pasteDataString()">
+                <span style="color:#a78bfa">📥</span> 恢复进度
+            </button>
+            <button class="pill-btn" onclick="exportCalendar(this)">
+                <span style="color:#10b981">📅</span> 导出日历
+            </button>
+        </div>
+        <div style="font-size: 0.75rem; color: #666; margin-bottom: 6px;">*本地离线系统，请记得定期备份</div>
+        <div style="font-size: 0.72rem; color: #555;">📅 导出日历：下载 .ics 文件后，用手机"文件"app 点击即可导入系统日历</div>
+
+        <div class="danger-zone">
+            <button class="btn-reset" onclick="resetData()">
+                <span>↻</span> 清空记录重新开始
+            </button>
+        </div>
+
+        <div class="copyright">© 舟舟的思维进化系统 | 本地数据已启用</div>
+    </footer>
+
+    <div class="modal-overlay" id="modal" onclick="closeModal(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <div class="modal-title" id="m-title">Day X</div>
+                <button class="close-btn" onclick="closeModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="section-label">🎯 今日实战 (Daily Task)</div>
+                <div class="task-box">
+                    <div id="m-task" style="margin-bottom:10px;">...</div>
+                </div>
+                <div class="example-box">
+                    <div style="color:var(--gold); font-weight:bold; margin-bottom:4px;">💡 技巧提示:</div>
+                    <div id="m-example" style="color:#aaa; white-space:pre-wrap;">...</div>
+                </div>
+
+                <div class="section-label" style="color: #a78bfa;">🗣️ 初稿 (V1.0)</div>
+                <textarea id="m-input" class="homework-area" placeholder="点击麦克风，口述你的想法..."></textarea>
+                
+                <button class="btn-ai-gen" onclick="generateAiPrompt()">
+                    <span>✨ 呼叫 AI 教练优化逻辑</span>
+                </button>
+                
+                <div class="ai-prompt-box" id="ai-box">
+                    <div style="color:#888; font-size:0.7rem; margin-bottom:8px;">指令已生成：</div>
+                    <div class="ai-prompt-content" id="ai-prompt-text"></div>
+                    <div class="btn-group">
+                        <button class="btn-secondary" onclick="forceCopy(this)">📋 仅复制</button>
+                        <button class="btn-secondary" style="background:#fff; color:#000;" onclick="jumpToDoubao(this)">🚀 去豆包 APP</button>
+                    </div>
+                </div>
+
+                <div class="section-label" style="color: var(--gold); margin-top:30px;">🏆 大师成品 (V2.0)</div>
+                <textarea id="m-revision" class="revision-area" placeholder="AI 优化后的逻辑版本..."></textarea>
+                <div id="save-msg" style="text-align:right; color:#666; font-size:0.7rem; margin-top:4px;">已保存</div>
+
+                <button class="btn-report" onclick="generateVisualReport()">
+                    📸 生成实战战报
+                </button>
+                <div style="height:40px"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="report-overlay" id="report-overlay">
+        <div class="report-close" onclick="closeReport()">×</div>
+        <img id="report-img" class="report-img" alt="Report">
+        <div class="report-tip">长按图片保存 -> 秀出你的逻辑</div>
+    </div>
+    <canvas id="canvas-buffer" width="1080" height="1440"></canvas>
+
+    <script>
+        // ===== 微信内置浏览器检测 =====
+        (function detectWechat() {
+            var ua = navigator.userAgent.toLowerCase();
+            if (ua.indexOf('micromessenger') !== -1) {
+                document.getElementById('wechat-tip').classList.add('show');
+                // 给页面顶部留出提示条的空间
+                document.body.style.paddingTop = '56px';
+            }
+        })();
+
+        // ===== localStorage 安全封装（兼容 iOS Safari 隐私模式）=====
+        var LS = (function() {
+            var mem = {};
+            function isAvailable() {
+                try { localStorage.setItem('__t', '1'); localStorage.removeItem('__t'); return true; } catch(e) { return false; }
+            }
+            var ok = isAvailable();
+            return {
+                get: function(k) { return ok ? localStorage.getItem(k) : (mem[k] || null); },
+                set: function(k, v) { if (ok) { localStorage.setItem(k, v); } else { mem[k] = v; } },
+                remove: function(k) { if (ok) { localStorage.removeItem(k); } else { delete mem[k]; } }
+            };
+        })();
+
+        // ===== 邀请码验证 =====
+        const VALID_CODE = 'LOGIC-2026';
+        const GATE_KEY = 'zhouzhou_logic_gate';
+
+        function verifyCode() {
+            const input = document.getElementById('gate-input');
+            const errorEl = document.getElementById('gate-error');
+            const code = input.value.trim().toUpperCase();
+
+            input.classList.remove('error');
+            errorEl.classList.remove('show');
+
+            if (code === VALID_CODE) {
+                LS.set(GATE_KEY, '1');
+                unlockContent();
+            } else {
+                input.classList.add('error');
+                errorEl.classList.add('show');
+                errorEl.innerText = '邀请码无效，请检查后重试';
+            }
+        }
+
+        function unlockContent() {
+            document.getElementById('gate').style.display = 'none';
+            document.getElementById('main-content').style.display = 'block';
+        }
+
+        // 页面加载时检查是否已验证
+        (function checkGate() {
+            if (LS.get(GATE_KEY) === '1') {
+                unlockContent();
+            }
+        })();
+
+        // === 核心数据 ===
+        const syllabus = {
+            1: {
+                title: "观点训练：说人话",
+                goal: "本周目标：一句话讲清楚事 (信息压缩 + 观点输出)，拒绝啰嗦。",
+                days: [
+                { day: 1, title: "有效吐槽", model: "SCQA-Conflict", task: "【场景：吐槽一件烦心事】\n今天遇到什么不爽的事了？试着把它说清楚。\n不要只说'气死我了'，要说清楚【本来应该是怎样(S)】，【实际发生了什么冲突(C)】，【你希望怎么解决(A)】。", example: "技巧：用 SCQA 讲故事。\n比如：'本来我和老公约好去吃饭(S)，结果他临时加班(C)，我很失落，希望下次能补上(A)。'", template: "本来是：\n但是：\n所以我想：" },
+                { day: 2, title: "疯狂安利", model: "SCQA-Answer", task: "【场景：安利一款好物/剧】\n向闺蜜推荐一个你最近爱用的东西。\n先直接说【它有多好(A)】，再说【大家平时的痛点(C)】，最后说【为什么它能解决(Q-A)】。", example: "技巧：结论先行(A-S-C-Q)。\n比如：'这款面霜绝了(A)！以前我脸总干(C)，用了很多都不行，直到用了它(S)...'", template: "我要吹爆这个：\n大家平时是不是总：\n但它能：" },
+                { day: 3, title: "自我介绍", model: "SCQA-Intro", task: "【场景：新群破冰】\n进入一个新的社群，做一个让人记住的自我介绍。\n别只报名字，说说【你是谁(S)】，【你正在经历什么挑战/探索(C)】，【你能给大家带来什么(A)】。", example: "技巧：用故事包装身份。\n比如：'我是带娃5年的宝妈(S)，不想与社会脱节(C)，现在正在学习AI写作(A)。'", template: "我是谁：\n我正在面临/探索：\n我能分享：" },
+                { day: 4, title: "高情商拒绝", model: "SCQA-Refuse", task: "【场景：拒绝不合理要求】\n朋友借钱、同事甩锅？试着委婉但坚定地拒绝。\n先【肯定对方/表示感谢(S)】，再说【自己的难处(C)】，最后【给个台阶/替代方案(A)】。", example: "技巧：S(缓冲)-C(理由)-A(拒绝)。\n比如：'谢谢你想到我(S)，但我最近手头也紧(C)，确实没法借，抱歉啊(A)。'", template: "谢谢你：\n但是我现在：\n所以比较抱歉：" },
+                { day: 5, title: "发朋友圈", model: "SCQA-Moment", task: "【场景：记录生活感悟】\n发一条有深度的朋友圈。\n先描述【一个现象(S)】，再指出【大多数人的误区(C)】，最后亮出【你的独特观点(A)】。", example: "技巧：制造反差。\n比如：'大家都觉得躺平很爽(S)，其实躺平更焦虑(C)，真正的松弛感是掌控力(A)。'", template: "大家通常觉得：\n但其实：\n我认为：" },
+                { day: 6, title: "哄人/求和", model: "SCQA-Peace", task: "【场景：解决冷战】\n惹人生气了怎么哄？\n先承认【我们的关系很重要(S)】，再承认【刚才的问题(C)】，最后提出【补救措施(A)】。", example: "技巧：S(共同目标)-C(确认冲突)-A(行动)。\n比如：'我们别吵了(S)，刚才是我语气重了(C)，带你去吃火锅吧(A)。'", template: "我们本意是：\n刚才确实：\n不如我们：" },
+                { day: 7, title: "本周复盘", model: "Review", task: "【场景：跟自己对话】\n这周过得怎么样？\n【S:计划】vs【C:实际变化】vs【A:下周调整】。", example: "技巧：SCQA复盘法。", template: "本周原本计划：\n中间遇到了：\n下周决定：" }
+            ]},
+            2: {
+                title: "结构训练：有逻辑",
+                goal: "本周目标：搭建思维骨架，让表达站得住脚，不再语无伦次。",
+                days: [
+                { day: 8, title: "列清单", model: "Structure-List", task: "【场景：周末计划】\n这个周末想做什么？不要乱想，列出 3 件事。\n技巧：这就是“归纳法”。", example: "1. 休息类（睡懒觉）\n2. 社交类（聚餐）\n3. 学习类（看书）", template: "周末我想做三件事：\n1.\n2.\n3." },
+                { day: 9, title: "做选择", model: "Structure-Choice", task: "【场景：买不买？】\n看中了一个贵东西，纠结买不买？\n列出【买的理由】vs【不买的理由】，最后给结论。", example: "技巧：正反论证。\n正面：利用率高；反面：超预算。", template: "我想买：\n支持理由：\n反对理由：\n最终决定：" },
+                { day: 10, title: "教别人", model: "Structure-Steps", task: "【场景：教爸妈用手机/做菜】\n要把一个步骤讲清楚。\n用“第一步、第二步、第三步”的顺序。", example: "技巧：时间顺序。\n1. 先打开设置；2. 再点显示；3. 调大字体。", template: "教你做/用这个：\n第一步：\n第二步：\n第三步：" },
+                { day: 11, title: "谈加薪/谈条件", model: "Structure-Value", task: "【场景：谈利益】\n想让老公做家务？或者跟老板谈资源？\n告诉他：这样做【对你有什么好处(WIIFM)】。", example: "技巧：利益驱动。\n'老公你把地扫了，我就能腾出手给你做红烧肉了。'", template: "我想让你做：\n这样做对你的好处是：" },
+                { day: 12, title: "评价事物", model: "Structure-Aspects", task: "【场景：评价一个餐厅/电影】\n不要只说“好吃/好看”。\n试着从 3 个维度评价（如：环境、服务、口味）。", example: "技巧：结构化思维(MECE)。", template: "评价：\n1. 维度一：\n2. 维度二：\n3. 维度三：" },
+                { day: 13, title: "讲道理", model: "Structure-Logic", task: "【场景：说服别人】\n用“因为...所以...”的逻辑说服一个人。\n比如劝人早睡，劝人读书。", example: "技巧：演绎推理。\n'熬夜会变丑(大前提)，你不想变丑(小前提)，所以你要早睡(结论)。'", template: "我建议你：\n因为一：\n因为二：\n所以：" },
+                { day: 14, title: "结构化总结", model: "Review", task: "【场景：周记】\n用“总-分”结构写这周的总结。\n先说一个核心词，再说三件小事。", example: "核心词：忙碌。\n1. 工作忙；2. 家里忙；3. 心里忙。", template: "本周关键词：\n具体表现1：\n具体表现2：\n具体表现3：" }
+            ]},
+            3: {
+                title: "洞察训练：高级感",
+                goal: "本周目标：透过现象看本质，用类比和金句让你的表达闪闪发光。",
+                days: [
+                { day: 15, title: "打比方", model: "Analogy-Life", task: "【场景：解释心情】\n你现在是什么心情？\n试着用“就像......”来形容它。", example: "技巧：类比。\n'我累得就像一条刚跑完马拉松的狗。'", template: "我现在感觉：\n就像：" },
+                { day: 16, title: "讲故事", model: "Story-Moment", task: "【场景：分享经历】\n讲一个你过去的“高光时刻”或“至暗时刻”。\n要有画面感。", example: "技巧：STAR法则（情境-任务-行动-结果）。", template: "那是一次：\n当时情况是：\n我做了：\n最后：" },
+                { day: 17, title: "说金句", model: "Golden-Word", task: "【场景：鼓励朋友】\n朋友emo了，送他一句有力量的话。\n试着押韵，或者用对比。", example: "技巧：金句提炼。\n'万物皆有裂痕，那是光照进来的地方。'", template: "想对你说：\n" },
+                { day: 18, title: "神预言", model: "Insight-Future", task: "【场景：聊趋势】\n聊聊你对某个行业（如AI、短视频）的看法。\n用“我认为未来......”开头。", example: "技巧：洞察力。", template: "关于这个行业：\n我认为未来会：" },
+                { day: 19, title: "扎心真相", model: "Insight-Truth", task: "【场景：揭露本质】\n透过现象看本质。\n“表面上是A，实际上是B”。", example: "技巧：深度思考。\n'表面上是拖延，实际上是恐惧失败。'", template: "表面上：\n实际上：" },
+                { day: 20, title: "行动号召", model: "Call-Action", task: "【场景：约人】\n约朋友出来玩，或者号召大家一起做件事。\n给出一个无法拒绝的理由。", example: "技巧：CTA (Call To Action)。", template: "我们一起去：\n如果不去会后悔，因为：" },
+                { day: 21, title: "毕业感言", model: "Final-Speech", task: "【场景：完结撒花】\n21天结束了，对自己说一段话。\n用上SCQA，加上排比句。", example: "S(开始很难)-C(中间很累)-A(但我坚持下来了)。", template: "对自己说：" }
+            ]},
+            4: {
+                title: "结营项目：我是谁的向导？",
+                goal: "21天你练的是"说清楚一件事"。结营项目只问你一个问题：你能帮什么人，解决什么问题？",
+                days: [
+                { day: 22, title: "找到你的英雄", model: "Graduation-Hero", task: "【Step 1：找到你的英雄】\n他是谁？他每天在面对什么困境？\n不要说"所有人"，说一个具体的人。", example: "舟舟的示范：\n有一种人，每天都有很多想法，但一开口就语无伦次，写出来自己都看不懂。他们最大的困境不是没东西说，而是说了别人不懂、写了没人看。内心深处，他们真正害怕的是：我说的东西根本不值得被听见。", template: "有一种人，每天都在_______，\n但他们最大的困境是_______，\n内心深处，他们真正害怕的是_______。" },
+                { day: 23, title: "你是他的向导", model: "Graduation-Guide", task: "【Step 2：你是他的向导】\n你为什么有资格帮他？\n不是因为你很厉害，是因为你理解他的处境。", example: "舟舟的示范：\n我曾经也是这样的人，满肚子话说不清楚。后来我发现表达是可以训练的，不是天赋，是结构。现在我可以帮她用21天，把脑子里的东西说清楚。", template: "我曾经也是这样的人，_______。\n后来我发现_______。\n现在我可以帮他_______。" },
+                { day: 24, title: "帮他看见新生活", model: "Graduation-Vision", task: "【Step 3：帮他看见新生活】\n跟着你之后，他的生活会有什么具体的变化？\n不要说"变得更好"，说一个画面。", example: "舟舟的示范：\n跟我走完这段路之后，她可以开口就有逻辑，不再害怕表达，开始被真正需要她的人看见。", template: "跟我走完这段路之后，\n他可以_______，\n不再_______，\n开始_______。" }
+            ]}
+        };
+
+        let currentWeek = 1;
+        const DB_KEY_PROG = 'zhouzhou_life_prog'; 
+        const DB_KEY_INPUT = 'zhouzhou_life_input';
+        const DB_KEY_REV = 'zhouzhou_life_rev';
+
+        let completedDays = JSON.parse(LS.get(DB_KEY_PROG)) || [];
+        let userInputs = JSON.parse(LS.get(DB_KEY_INPUT)) || {};
+        let userRevisions = JSON.parse(LS.get(DB_KEY_REV)) || {};
+        
+        let activeDayId = null;
+        let activeWeekId = 1;
+
+        function init() { renderContent(); updateProgress(); }
+
+        function renderContent() {
+            const container = document.getElementById('content-area');
+            container.innerHTML = '';
+            
+            const weekData = syllabus[currentWeek];
+            const banner = document.getElementById('week-banner');
+            banner.innerHTML = `
+                <div class="banner-tag">WEEK 0${currentWeek}</div>
+                <div class="banner-title">${weekData.title}</div>
+                <div class="banner-desc">${weekData.goal}</div>
+            `;
+            
+            banner.style.animation = 'none';
+            banner.offsetHeight; 
+            banner.style.animation = 'slideUp 0.4s ease-out';
+
+            let html = `<div class="grid active">`;
+            weekData.days.forEach(d => {
+                const isDone = completedDays.includes(d.day);
+                const dayLabel = currentWeek === 4 ? `0${d.day - 21}` : (d.day < 10 ? `0${d.day}` : d.day);
+                const badgePrefix = currentWeek === 4 ? 'STEP' : 'DAY';
+                html += `
+                    <div class="card ${isDone ? 'completed' : ''}" onclick="openModal(${currentWeek}, ${d.day})">
+                        <div class="card-left">
+                            <div class="day-badge">${badgePrefix} ${dayLabel}</div>
+                            <div class="card-title">${d.task.split('\n')[0]}</div>
+                        </div>
+                        <div class="check-area" onclick="toggleComplete(event, ${d.day})">
+                            <div class="check-icon"></div>
+                        </div>
+                    </div>`;
+            });
+            html += `</div>`;
+
+            if (currentWeek === 4) {
+                html += `<div class="grad-deadline"><span>⏳</span><span>结营后 3 天内完成，写好发到群里</span></div>`;
+                html += `<div class="grad-section">
+                    <div class="grad-section-title">💡 示范参考（舟舟版）</div>
+                    <div class="grad-example-block"><div class="grad-step-label">STEP 01 · 英雄</div>有一种人，每天都有很多想法，但一开口就语无伦次，写出来自己都看不懂。他们最大的困境不是没东西说，而是说了别人不懂、写了没人看。内心深处，他们真正害怕的是：我说的东西根本不值得被听见。</div>
+                    <div class="grad-example-block"><div class="grad-step-label">STEP 02 · 向导</div>我曾经也是这样的人，满肚子话说不清楚。后来我发现表达是可以训练的，不是天赋，是结构。现在我可以帮她用21天，把脑子里的东西说清楚。</div>
+                    <div class="grad-example-block"><div class="grad-step-label">STEP 03 · 新生活</div>跟我走完这段路之后，她可以开口就有逻辑，不再害怕表达，开始被真正需要她的人看见。</div>
+                </div>`;
+                html += `<div class="grad-standard">
+                    <div class="grad-standard-title">✅ 完成标准</div>
+                    <div class="grad-standard-item"><div class="grad-standard-dot"></div><div>一个完全不认识你的人，看完知道你在帮谁</div></div>
+                    <div class="grad-standard-item"><div class="grad-standard-dot"></div><div>知道你能解决什么问题</div></div>
+                    <div class="grad-standard-item"><div class="grad-standard-dot"></div><div>觉得"这说的就是我"或者"我认识这样的人"</div></div>
+                </div>`;
+                html += `<button class="btn-guide" onclick="generateGuideResult()">✨ 合并生成我的向导宣言</button>`;
+                html += `<div class="guide-result" id="guide-result"><div class="guide-result-label">📄 我的向导宣言</div><div class="guide-result-text" id="guide-result-text"></div></div>`;
+                html += `<button class="btn-guide-copy" id="btn-guide-copy" onclick="copyGuideResult()">📋 复制全文，发到群里</button>`;
+            }
+
+            container.innerHTML = html;
+        }
+
+        function switchWeek(weekNum) {
+            currentWeek = weekNum;
+            document.querySelectorAll('.nav-item').forEach((btn, idx) => {
+                btn.className = (idx + 1 === weekNum) ? 'nav-item active' : 'nav-item';
+            });
+            renderContent();
+        }
+
+        function toggleComplete(event, dayId) {
+            event.stopPropagation(); 
+            const idx = completedDays.indexOf(dayId);
+            if (idx > -1) completedDays.splice(idx, 1);
+            else completedDays.push(dayId);
+            LS.set(DB_KEY_PROG, JSON.stringify(completedDays));
+            updateProgress();
+            renderContent(); 
+        }
+
+        function updateProgress() {
+            const totalDays = Object.values(syllabus).reduce((sum, w) => sum + w.days.length, 0);
+            const pct = Math.round((completedDays.length / totalDays) * 100);
+            document.getElementById('progress-bar').style.width = pct + '%';
+            document.getElementById('progress-text').innerText = pct + '%';
+        }
+
+        function openModal(week, dayId) {
+            const data = syllabus[week].days.find(d => d.day === dayId);
+            if (!data) return;
+            activeDayId = dayId;
+            activeWeekId = week;
+            
+            document.getElementById('m-title').innerText = `Day ${dayId} | ${data.title}`;
+            document.getElementById('m-task').innerText = data.task;
+            document.getElementById('m-example').innerText = data.example;
+            
+            const inputArea = document.getElementById('m-input');
+            const revArea = document.getElementById('m-revision');
+            
+            inputArea.value = userInputs[dayId] || data.template;
+            revArea.value = userRevisions[dayId] || "";
+
+            document.getElementById('ai-box').style.display = 'none';
+            document.getElementById('modal').classList.add('open');
+        }
+
+        document.getElementById('m-input').addEventListener('input', function(e) {
+            if (!activeDayId) return;
+            userInputs[activeDayId] = e.target.value;
+            LS.set(DB_KEY_INPUT, JSON.stringify(userInputs));
+            document.getElementById('save-msg').innerText = "初稿已保存";
+        });
+
+        document.getElementById('m-revision').addEventListener('input', function(e) {
+            if (!activeDayId) return;
+            userRevisions[activeDayId] = e.target.value;
+            LS.set(DB_KEY_REV, JSON.stringify(userRevisions));
+            document.getElementById('save-msg').innerText = "成品已保存";
+        });
+
+        function generateAiPrompt() {
+            const inputVal = document.getElementById('m-input').value;
+            const dayData = syllabus[activeWeekId].days.find(d => d.day === activeDayId);
+            const templateText = dayData.template.trim();
+            const currentText = inputVal ? inputVal.trim() : "";
+
+            if (!currentText || currentText.length < 5 || currentText === templateText) {
+                alert("⚠️ 请先写点东西（支持语音输入）！\n不能交白卷哦。");
+                return;
+            }
+
+            const prompt = `我正在参加《结构化表达实战营》，请你扮演一位高情商、逻辑清晰的沟通教练。
+
+【今日生活场景】：${dayData.title}
+【任务要求】：${dayData.task.replace(/\n/g, " ")}
+
+【我的口述/初稿】：
+${inputVal}
+
+【请帮我做两件事（不要讲大道理，直接上干货）】：
+
+1. 🩺 逻辑诊断：
+   - 我说清楚了吗？
+   - 是否符合今日的技巧（比如有没有用上SCQA，或者逻辑顺不顺）？
+   - 给我打个分（0-10分）。
+
+2. ✨ 高情商/高逻辑重写（演示）：
+   - 请运用结构化思维（SCQA/总分总/类比），帮我把这段话重写一遍。
+   - 要求：口语化、自然、能直接发朋友圈或直接说给别人听。
+
+请直接输出结果。`;
+
+            document.getElementById('ai-prompt-text').innerText = prompt;
+            document.getElementById('ai-box').style.display = 'block';
+            setTimeout(() => {
+                const modalBody = document.querySelector('.modal-body');
+                modalBody.scrollTo({ top: modalBody.scrollHeight, behavior: 'smooth' });
+            }, 100);
+        }
+
+        function forceCopy(btnElement) {
+            const text = document.getElementById('ai-prompt-text').innerText;
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text)
+                    .then(() => showSuccess(btnElement))
+                    .catch(() => fallbackCopy(text, btnElement));
+            } else { fallbackCopy(text, btnElement); }
+        }
+
+        function jumpToDoubao(btnElement) {
+            const text = document.getElementById('ai-prompt-text').innerText;
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed'; textarea.style.left = '-9999px';
+            document.body.appendChild(textarea);
+            textarea.select();
+            try { document.execCommand('copy'); showSuccess(btnElement); } catch (e) {}
+            document.body.removeChild(textarea);
+            window.open("https://www.doubao.com/chat/", "_blank");
+        }
+
+        function fallbackCopy(text, btnElement) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            textArea.style.position = "fixed"; textArea.style.left = "-9999px"; textArea.style.top = "0"; textArea.setAttribute("readonly", "");
+            document.body.appendChild(textArea);
+            if (navigator.userAgent.match(/ipad|iphone/i)) {
+                const range = document.createRange(); range.selectNodeContents(textArea);
+                const selection = window.getSelection(); selection.removeAllRanges(); selection.addRange(range);
+                textArea.setSelectionRange(0, 999999);
+            } else { textArea.select(); }
+            try { document.execCommand('copy'); showSuccess(btnElement); } catch (e) { alert("复制受限，请长按手动复制"); }
+            document.body.removeChild(textArea);
+        }
+
+        function showSuccess(btn) {
+            const originalText = btn.innerHTML;
+            btn.innerHTML = "✅ 已复制";
+            btn.classList.add("success");
+            setTimeout(() => { btn.innerHTML = originalText; btn.classList.remove("success"); }, 2000);
+        }
+
+        function generateVisualReport() {
+            const revVal = document.getElementById('m-revision').value.trim();
+            const inputVal = document.getElementById('m-input').value.trim();
+            
+            if (revVal.length < 2) {
+                if(!confirm("⚠️ 建议把 AI 改好的版本填在【逻辑清晰版】里再生成战报，效果更好哦。\n\n是否坚持只生成初稿？")) return;
+            }
+
+            const canvas = document.getElementById('canvas-buffer');
+            const ctx = canvas.getContext('2d');
+            const W = 1080; const H = 1440;
+            
+            let taskTitle = "";
+            for(let p=1; p<=4; p++) { 
+                const d = syllabus[p].days.find(i => i.day === activeDayId); 
+                if(d) { taskTitle = d.title; }
+            }
+
+            const grd = ctx.createLinearGradient(0, 0, 0, H);
+            grd.addColorStop(0, "#0f172a"); grd.addColorStop(1, "#020617");
+            ctx.fillStyle = grd; ctx.fillRect(0, 0, W, H);
+            ctx.strokeStyle = "#1e293b"; ctx.lineWidth = 2;
+            for(let i=0; i<H; i+=60) { ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(W,i); ctx.stroke(); }
+
+            ctx.fillStyle = "#3b82f6"; ctx.font = "bold 40px 'JetBrains Mono'"; ctx.fillText("LOGIC LAB", 60, 100);
+            ctx.fillStyle = "#fff"; ctx.font = "900 200px 'JetBrains Mono'"; ctx.fillText(activeDayId < 10 ? `0${activeDayId}` : `${activeDayId}`, 50, 320);
+            ctx.fillStyle = "#94a3b8"; ctx.font = "bold 50px 'Noto Sans SC'"; ctx.fillText(`生活实战 | ${taskTitle}`, 60, 420);
+
+            const boxY = 480;
+            ctx.fillStyle = "#0f172a"; ctx.fillRect(60, boxY, W-120, H-600);
+            ctx.strokeStyle = "#334155"; ctx.strokeRect(60, boxY, W-120, H-600);
+
+            let contentToDraw = "";
+            let label = "";
+            let color = "";
+
+            if (revVal.length > 5) {
+                label = "🏆 逻辑清晰版";
+                contentToDraw = revVal;
+                color = "#fcd34d"; 
+            } else {
+                label = "📝 原始记录";
+                contentToDraw = inputVal;
+                color = "#e2e8f0"; 
+            }
+
+            ctx.fillStyle = color; ctx.font = "bold 36px 'Noto Sans SC'"; ctx.fillText(label, 100, boxY + 80);
+            ctx.fillStyle = "#ffffff"; ctx.font = "36px 'Noto Sans SC'"; 
+            wrapText(ctx, contentToDraw, 100, boxY + 160, W-200, 60);
+
+            ctx.fillStyle = "#3b82f6"; ctx.font = "30px 'Noto Sans SC'"; ctx.fillText("#结构化表达生活实战", 60, H-60);
+            
+            document.getElementById('report-img').src = canvas.toDataURL("image/png");
+            document.getElementById('report-overlay').classList.add('show');
+        }
+
+        function closeReport() { document.getElementById('report-overlay').classList.remove('show'); }
+        
+        function wrapText(context, text, x, y, maxWidth, lineHeight) {
+            const paragraphs = text.split('\n'); let currentY = y;
+            paragraphs.forEach(paragraph => {
+                let line = ''; const words = paragraph.split('');
+                for(let n = 0; n < words.length; n++) {
+                    const testLine = line + words[n];
+                    if (context.measureText(testLine).width > maxWidth && n > 0) { context.fillText(line, x, currentY); line = words[n]; currentY += lineHeight; } else { line = testLine; }
+                }
+                context.fillText(line, x, currentY); currentY += lineHeight * 1.5;
+            });
+        }
+
+        function copyDataString(btn) {
+            const data = { prog: completedDays, data: userInputs, rev: userRevisions };
+            const str = "LIFE_BACKUP::" + btoa(encodeURIComponent(JSON.stringify(data)));
+            fallbackCopy(str, btn);
+        }
+
+        function pasteDataString() {
+            const code = prompt("请粘贴您的备份口令 (以 LIFE_BACKUP:: 开头)");
+            if (!code) return;
+            try {
+                if (code.startsWith("LIFE_BACKUP::")) {
+                    const cleanCode = code.replace("LIFE_BACKUP::", "");
+                    const jsonString = decodeURIComponent(atob(cleanCode));
+                    const data = JSON.parse(jsonString);
+                    if (confirm("确定要恢复数据吗？当前进度将被覆盖。")) {
+                        completedDays = data.prog || [];
+                        userInputs = data.data || {};
+                        userRevisions = data.rev || {};
+                        LS.set(DB_KEY_PROG, JSON.stringify(completedDays));
+                        LS.set(DB_KEY_INPUT, JSON.stringify(userInputs));
+                        LS.set(DB_KEY_REV, JSON.stringify(userRevisions));
+                        init();
+                        alert("🎉 数据已成功恢复！");
+                    }
+                } else { alert("❌ 口令格式错误"); }
+            } catch (e) { alert("❌ 数据损坏"); }
+        }
+
+        function resetData() {
+            if(confirm("⚠️ 警告：确定要清空所有进度重新开始吗？\n\n此操作无法撤销！如果需要保留数据，请先点击【备份进度】。")) {
+                LS.remove(DB_KEY_PROG);
+                LS.remove(DB_KEY_INPUT);
+                LS.remove(DB_KEY_REV);
+                location.reload();
+            }
+        }
+
+        function closeModal(event) {
+            if (!event || event.target.id === 'modal' || event.target.classList.contains('close-btn')) {
+                document.getElementById('modal').classList.remove('open');
+                activeDayId = null;
+            }
+        }
+
+        function generateGuideResult() {
+            var t1 = (userInputs[22] || '').trim();
+            var t2 = (userInputs[23] || '').trim();
+            var t3 = (userInputs[24] || '').trim();
+            if (t1.length < 10 || t2.length < 10 || t3.length < 10) {
+                alert('⚠️ 每个步骤至少写10个字哦！先把三步都写完再来生成向导宣言。');
+                return;
+            }
+            var r1 = (userRevisions[22] || '').trim();
+            var r2 = (userRevisions[23] || '').trim();
+            var r3 = (userRevisions[24] || '').trim();
+            var final1 = r1.length > 10 ? r1 : t1;
+            var final2 = r2.length > 10 ? r2 : t2;
+            var final3 = r3.length > 10 ? r3 : t3;
+            var full = final1 + '\n\n' + final2 + '\n\n' + final3;
+            document.getElementById('guide-result-text').innerText = full;
+            document.getElementById('guide-result').classList.add('show');
+            document.getElementById('btn-guide-copy').style.display = 'flex';
+            setTimeout(function() {
+                document.getElementById('guide-result').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
+        }
+
+        function copyGuideResult() {
+            var text = document.getElementById('guide-result-text').innerText;
+            var btn = document.getElementById('btn-guide-copy');
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(function() { showSuccess(btn); }).catch(function() { fallbackCopy(text, btn); });
+            } else { fallbackCopy(text, btn); }
+        }
+
+        // ===== 📅 导出 ICS 日历 =====
+        function exportCalendar(btn) {
+            // 让用户选择从哪天开始
+            const startInput = prompt("从哪天开始训练？\n请输入开始日期（格式：2026-02-20）", getTodayStr());
+            if (!startInput) return;
+            const startDate = new Date(startInput);
+            if (isNaN(startDate.getTime())) {
+                alert('日期格式不对，请输入如 2026-02-20 的格式');
+                return;
+            }
+
+            const lines = [
+                'BEGIN:VCALENDAR',
+                'VERSION:2.0',
+                'PRODID:-//舟舟思维训练营//CN',
+                'CALSCALE:GREGORIAN',
+                'METHOD:PUBLISH',
+                'X-WR-CALNAME:思维训练营 21天打卡',
+                'X-WR-TIMEZONE:Asia/Shanghai',
+            ];
+
+            // 所有 21 天的任务
+            const allDays = [];
+            Object.keys(syllabus).forEach(w => { syllabus[w].days.forEach(d => allDays.push(d)); });
+
+            allDays.forEach((d, idx) => {
+                const eventDate = new Date(startDate);
+                eventDate.setDate(startDate.getDate() + idx);
+                const dateStr = formatIcsDate(eventDate);
+                const weekNum = idx < 7 ? 1 : idx < 14 ? 2 : 3;
+                const uid = 'zhouzhou-day' + d.day + '@logic2026';
+                const title = 'Day ' + (d.day < 10 ? '0' + d.day : d.day) + ' · ' + d.title;
+                const desc = d.task.replace(/\n/g, '\\n').replace(/,/g, '\\,');
+
+                lines.push('BEGIN:VEVENT');
+                lines.push('UID:' + uid);
+                lines.push('DTSTART;VALUE=DATE:' + dateStr);
+                lines.push('DTEND;VALUE=DATE:' + dateStr);
+                lines.push('SUMMARY:🧠 ' + title);
+                lines.push('DESCRIPTION:' + desc);
+                lines.push('CATEGORIES:思维训练营,Week' + weekNum);
+                lines.push('BEGIN:VALARM');
+                lines.push('TRIGGER:-PT30M');
+                lines.push('ACTION:DISPLAY');
+                lines.push('DESCRIPTION:今天的思维训练还没做哦！');
+                lines.push('END:VALARM');
+                lines.push('END:VEVENT');
+            });
+
+            lines.push('END:VCALENDAR');
+
+            const icsContent = lines.join('\r\n');
+            const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = '思维训练营-21天打卡日历.ics';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            // 按钮反馈
+            const orig = btn.innerHTML;
+            btn.innerHTML = '<span style="color:#10b981">✅</span> 已导出';
+            setTimeout(() => { btn.innerHTML = orig; }, 2500);
+        }
+
+        function getTodayStr() {
+            const d = new Date();
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return y + '-' + m + '-' + day;
+        }
+
+        function formatIcsDate(date) {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            return y + m + d;
+        }
+
+        init();
+    </script>
+</body>
+</html>
