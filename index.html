@@ -309,19 +309,7 @@
     ⚠️ 请点右上角「···」→「在浏览器打开」，功能才能正常使用
 </div>
 
-<!-- 邀请码验证页 -->
-<div class="gate" id="gate">
-    <div class="gate-logo">🧠 思维进化训练营</div>
-    <div class="gate-title">专属学员<br>请验证身份</div>
-    <div class="gate-desc">请输入你的邀请码<br>邀请码由舟舟在群里发放</div>
-    <input class="gate-input" id="gate-input" type="text" placeholder="输入邀请码" maxlength="12"
-        oninput="this.value=this.value.toUpperCase()"
-        onkeydown="if(event.key==='Enter')verifyCode()">
-    <button class="gate-btn" onclick="verifyCode()">进入训练营 →</button>
-    <div class="gate-error" id="gate-error">邀请码无效，请检查后重试</div>
-</div>
-
-    <div class="container" id="main-content" style="display:none">
+    <div class="container" id="main-content">
         <div class="hero-section">
             <div class="hero-subtitle">21-DAY EVOLUTION</div>
             <div class="hero-title">
@@ -467,14 +455,7 @@
             };
         })();
 
-        // ===== 邀请码验证（已关闭）=====
-        function unlockContent() {
-            document.getElementById('gate').style.display = 'none';
-            document.getElementById('main-content').style.display = 'block';
-        }
-
-        // 直接进入，不需要邀请码
-        unlockContent();
+        // ===== 邀请码已移除，直接展示内容 =====
 
         // === 核心数据 ===
         const syllabus = {
