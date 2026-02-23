@@ -263,6 +263,11 @@
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes slideUp { from { transform: translateY(10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         @keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
+        /* 打卡完成特效 */
+        .celebrate-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 300; pointer-events: none; display: flex; justify-content: center; align-items: center; }
+        .celebrate-text { font-size: 2rem; font-weight: 900; color: #fbbf24; text-shadow: 0 0 30px rgba(251,191,36,0.5); animation: celebPop 1.5s ease-out forwards; opacity: 0; }
+        @keyframes celebPop { 0% { opacity: 0; transform: scale(0.5); } 20% { opacity: 1; transform: scale(1.15); } 40% { transform: scale(1); } 70% { opacity: 1; } 100% { opacity: 0; transform: translateY(-40px); } }
+        .confetti-particle { position: fixed; z-index: 301; pointer-events: none; border-radius: 3px; }
 
         /* 微信提示横幅 */
         .wechat-tip {
@@ -586,13 +591,63 @@
         }
 
         function toggleComplete(event, dayId) {
-            event.stopPropagation(); 
+            event.stopPropagation();
             const idx = completedDays.indexOf(dayId);
+            const isCompleting = idx === -1;
             if (idx > -1) completedDays.splice(idx, 1);
             else completedDays.push(dayId);
             LS.set(DB_KEY_PROG, JSON.stringify(completedDays));
             updateProgress();
-            renderContent(); 
+            renderContent();
+            if (isCompleting) celebrateComplete(event, dayId);
+        }
+
+        function celebrateComplete(event, dayId) {
+            // 金色粒子从点击位置爆开
+            var x = event.clientX || window.innerWidth / 2;
+            var y = event.clientY || window.innerHeight / 2;
+            var colors = ['#fbbf24', '#f59e0b', '#d97706', '#a78bfa', '#60a5fa', '#34d399'];
+            for (var i = 0; i < 25; i++) {
+                var p = document.createElement('div');
+                p.className = 'confetti-particle';
+                var size = 4 + Math.random() * 6;
+                p.style.width = size + 'px';
+                p.style.height = size + 'px';
+                p.style.background = colors[Math.floor(Math.random() * colors.length)];
+                p.style.left = x + 'px';
+                p.style.top = y + 'px';
+                document.body.appendChild(p);
+                animateParticle(p, x, y);
+            }
+            // 中央文字
+            var totalDays = Object.values(syllabus).reduce(function(s, w) { return s + w.days.length; }, 0);
+            var count = completedDays.length;
+            var overlay = document.createElement('div');
+            overlay.className = 'celebrate-overlay';
+            var msgs = ['🔥 打卡成功！', '✨ 又进一步！', '💪 坚持就是胜利！', '🎯 今日已完成！'];
+            var msg = msgs[Math.floor(Math.random() * msgs.length)];
+            if (count === totalDays) msg = '🏆 全部完成！你太强了！';
+            else if (count === 7) msg = '🔥 第一周搞定！';
+            else if (count === 14) msg = '⚡ 两周了，停不下来！';
+            else if (count === 21) msg = '🎓 21天训练完成！';
+            overlay.innerHTML = '<div class="celebrate-text">' + msg + '</div>';
+            document.body.appendChild(overlay);
+            setTimeout(function() { overlay.remove(); }, 1600);
+        }
+
+        function animateParticle(el, startX, startY) {
+            var angle = Math.random() * Math.PI * 2;
+            var velocity = 80 + Math.random() * 160;
+            var dx = Math.cos(angle) * velocity;
+            var dy = Math.sin(angle) * velocity - 60;
+            var rotation = Math.random() * 720 - 360;
+            el.style.transition = 'none';
+            requestAnimationFrame(function() {
+                el.style.transition = 'all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+                el.style.transform = 'translate(' + dx + 'px, ' + dy + 'px) rotate(' + rotation + 'deg)';
+                el.style.opacity = '0';
+            });
+            setTimeout(function() { el.remove(); }, 900);
         }
 
         function updateProgress() {
