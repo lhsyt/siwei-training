@@ -879,7 +879,37 @@ ${inputVal}
                 if(d) { taskTitle = d.title; }
             }
 
-            var hasComparison = revVal.length > 5 && inputVal.length > 2;
+            // 战报只展示精华，截掉评分部分，只保留优化后的文字
+            function cleanForReport(text) {
+                // 去掉评分部分（从"📊"或"任务一"到"🛠️"或"任务二"之间的内容）
+                var cleaned = text;
+                // 去掉评分段落
+                cleaned = cleaned.replace(/📊[\s\S]*?(?=🛠️|任务二)/g, '');
+                cleaned = cleaned.replace(/任务一[\s\S]*?(?=🛠️|任务二)/g, '');
+                // 去掉"任务二：优化版"这行标题
+                cleaned = cleaned.replace(/🛠️\s*优化版[^\n]*/g, '');
+                cleaned = cleaned.replace(/任务二[：:]\s*优化版[^\n]*/g, '');
+                // 去掉改动说明
+                cleaned = cleaned.replace(/【?改动说明】?[：:][\s\S]*/g, '');
+                // 去掉多余空行
+                cleaned = cleaned.replace(/\n{3,}/g, '\n\n').trim();
+                return cleaned;
+            }
+
+            var reportRevVal = cleanForReport(revVal);
+            var reportInputVal = inputVal;
+
+            // 字数自适应：超长文字缩小字号
+            var totalChars = reportInputVal.length + reportRevVal.length;
+            if (totalChars > 600) { fontSize = 28; lineH = 46; }
+            if (totalChars > 1000) { fontSize = 24; lineH = 40; }
+
+            // 截断保护：单段最多500字
+            var MAX_CHARS = 500;
+            if (reportInputVal.length > MAX_CHARS) reportInputVal = reportInputVal.substring(0, MAX_CHARS) + '......';
+            if (reportRevVal.length > MAX_CHARS) reportRevVal = reportRevVal.substring(0, MAX_CHARS) + '......';
+
+            var hasComparison = reportRevVal.length > 5 && reportInputVal.length > 2;
 
             // === Pass 1: 测量文字高度 ===
             canvas.width = W; canvas.height = 100;
@@ -910,9 +940,9 @@ ${inputVal}
             var barW = 5;
             var textLeftPad = PAD + barW + 30;
             var textMaxW = W - textLeftPad - PAD;
-            var origH = hasComparison ? measureH(inputVal) : 0;
-            var revH = (revVal.length > 5) ? measureH(revVal) : 0;
-            var singleH = revVal.length > 5 ? measureH(revVal) : measureH(inputVal);
+            var origH = hasComparison ? measureH(reportInputVal) : 0;
+            var revH = (reportRevVal.length > 5) ? measureH(reportRevVal) : 0;
+            var singleH = reportRevVal.length > 5 ? measureH(reportRevVal) : measureH(reportInputVal);
 
             var H;
             if (hasComparison) {
@@ -965,14 +995,14 @@ ${inputVal}
             }
 
             if (hasComparison) {
-                drawBlock("\uD83D\uDCDD \u539F\u59CB\u8BB0\u5F55 (V1.0)", inputVal, "#475569", "#94a3b8", "#94a3b8");
+                drawBlock("\uD83D\uDCDD \u539F\u59CB\u8BB0\u5F55 (V1.0)", reportInputVal, "#475569", "#94a3b8", "#94a3b8");
                 curY += 50;
-                drawBlock("\uD83C\uDFC6 \u8FDB\u5316\u7248\u672C (V2.0)", revVal, "#fcd34d", "#fcd34d", "#ffffff");
+                drawBlock("\uD83C\uDFC6 \u8FDB\u5316\u7248\u672C (V2.0)", reportRevVal, "#fcd34d", "#fcd34d", "#ffffff");
             } else {
-                if (revVal.length > 5) {
-                    drawBlock("\uD83C\uDFC6 \u8FDB\u5316\u7248\u672C (V2.0)", revVal, "#fcd34d", "#fcd34d", "#ffffff");
+                if (reportRevVal.length > 5) {
+                    drawBlock("\uD83C\uDFC6 \u8FDB\u5316\u7248\u672C (V2.0)", reportRevVal, "#fcd34d", "#fcd34d", "#ffffff");
                 } else {
-                    drawBlock("\uD83D\uDCDD \u539F\u59CB\u8BB0\u5F55 (V1.0)", inputVal, "#475569", "#94a3b8", "#e2e8f0");
+                    drawBlock("\uD83D\uDCDD \u539F\u59CB\u8BB0\u5F55 (V1.0)", reportInputVal, "#475569", "#94a3b8", "#e2e8f0");
                 }
             }
 
