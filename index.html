@@ -910,7 +910,7 @@ ${inputVal}
 
             var H;
             if (hasComparison) {
-                H = headerH + 80 + origH + 60 + 80 + 80 + revH + 60 + footerH;
+                H = headerH + 80 + origH + 60 + 30 + 80 + revH + 60 + footerH;
             } else {
                 H = headerH + 80 + singleH + 60 + footerH;
             }
@@ -946,14 +946,7 @@ ${inputVal}
                 ctx.fillText("\uD83D\uDCDD \u539F\u59CB\u8BB0\u5F55", PAD + 30, curY + 50);
                 ctx.fillStyle = "#94a3b8"; ctx.font = fontSize + "px " + FONT;
                 wrapText(ctx, inputVal, PAD + 30, curY + 100, maxTextW, lineH);
-                curY += origBoxH + 20;
-
-                // ---- 分隔箭头 ----
-                ctx.fillStyle = "#3b82f6"; ctx.font = "bold 36px " + FONT;
-                ctx.textAlign = "center";
-                ctx.fillText("\u2B07\uFE0F  AI \u4F18\u5316\u540E", W / 2, curY + 40);
-                ctx.textAlign = "left";
-                curY += 70;
+                curY += origBoxH + 30;
 
                 // ---- 逻辑清晰版 ----
                 var revBoxH = revH + 100;
