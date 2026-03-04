@@ -930,6 +930,14 @@ ${inputVal}
             
             document.getElementById('report-img').src = canvas.toDataURL("image/png");
             document.getElementById('report-overlay').classList.add('show');
+
+            // 生成战报 = 完成任务，自动打勾
+            if (!completedDays.includes(activeDayId)) {
+                completedDays.push(activeDayId);
+                LS.set(DB_KEY_PROG, JSON.stringify(completedDays));
+                updateProgress();
+                renderContent();
+            }
         }
 
         function closeReport() { document.getElementById('report-overlay').classList.remove('show'); }
