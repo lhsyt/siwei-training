@@ -411,9 +411,9 @@
                     <div style="color:#888; font-size:0.7rem; margin-bottom:8px;">指令已生成：</div>
                     <div class="ai-prompt-content" id="ai-prompt-text"></div>
                     <div class="btn-group">
-                        <button class="btn-secondary" onclick="forceCopy(this)">📋 仅复制</button>
-                        <button class="btn-secondary" style="background:#fff; color:#000;" onclick="jumpToDoubao(this)">🚀 去豆包 APP</button>
+                        <button class="btn-secondary" onclick="forceCopy(this)">📋 复制指令</button>
                     </div>
+                    <div style="color:#666; font-size:0.65rem; margin-top:6px; text-align:center;">复制后打开豆包 APP → 新对话 → 粘贴发送</div>
                 </div>
 
                 <div class="section-label" style="color: var(--gold); margin-top:30px;">🏆 大师成品 (V2.0)</div>
@@ -709,7 +709,6 @@
             const oralContext = `注意：以下内容是我口述后转文字的，可能有口语化表达、重复、语序混乱——这些正是我需要训练的地方。请你评估的是我的思维逻辑和表达结构，不是文笔。`;
 
             if (activeWeekId === 1) {
-                // Week 1: SCQA 观点训练 — 点问题 + 示范改法 + 追问
                 prompt = `你是一位结构化表达教练。我正在练习用SCQA框架说清楚一件事。
 
 ${oralContext}
@@ -720,25 +719,18 @@ ${oralContext}
 【我的初稿】：
 ${inputVal}
 
-请帮我做三件事（直接上干货，不要讲道理）：
+请帮我做两件事，直接上干货，不要讲道理，不要追问我：
 
-1. 🔍 要素体检（2-3句话说完）：
-   我的 S(情境)、C(冲突)、A(答案) 分别是哪句？缺了什么、哪里模糊？
+1. 🔍 诊断（2句话说完）：
+   我的 S(情境)、C(冲突)、A(答案) 分别是哪句？缺了什么或哪里模糊？
 
-2. 🛠️ 示范改法：
-   挑出最薄弱的1-2句话，直接给我一个改写示范。
-   格式：
-   原句：「……」
-   可以改成：「……」
-   改动原因：一句话说明为什么这样改更好。
-   （只改最弱的部分，不要重写我的全篇。剩下的我照着这个思路自己改。）
-
-3. ❓ 追问：
-   问我一个问题，帮我把最弱的部分想得更清楚。
+2. 🛠️ 优化版：
+   基于我的原文，只改需要改的部分，给我一个完整的改后版本。
+   改动的地方用【】标注，方便我对比学习。
+   不要重写风格，保留我的语气，只调结构。
 
 请直接输出结果。`;
             } else if (activeWeekId === 2) {
-                // Week 2: 结构逻辑训练 — 点问题 + 示范改法 + 追问
                 prompt = `你是一位结构化表达教练。我正在练习让表达更有逻辑、更有条理。
 
 ${oralContext}
@@ -749,25 +741,18 @@ ${oralContext}
 【我的初稿】：
 ${inputVal}
 
-请帮我做三件事（直接上干货，不要讲道理）：
+请帮我做两件事，直接上干货，不要讲道理，不要追问我：
 
-1. 🔍 结构体检（2-3句话说完）：
-   我用了什么结构？逻辑链完整吗？哪里断了或跑偏了？
+1. 🔍 诊断（2句话说完）：
+   我用了什么结构？逻辑链哪里断了或跑偏了？
 
-2. 🛠️ 示范改法：
-   挑出逻辑最弱或最废话的1-2句，直接给我一个改写示范。
-   格式：
-   原句：「……」
-   可以改成：「……」
-   改动原因：一句话说明为什么这样改逻辑更顺。
-   （只改最弱的部分，不要重写我的全篇。剩下的我照着这个思路自己改。）
-
-3. ❓ 读者视角：
-   一个完全不了解背景的人读完，最可能问的第一个问题是什么？
+2. 🛠️ 优化版：
+   基于我的原文，只改逻辑不顺或废话的部分，给我一个完整的改后版本。
+   改动的地方用【】标注，方便我对比学习。
+   不要重写风格，保留我的语气，只调逻辑。
 
 请直接输出结果。`;
             } else if (activeWeekId === 3) {
-                // Week 3: 洞察高级训练 — 点问题 + 示范改法 + 追问
                 prompt = `你是一位表达教练，擅长帮人提炼洞察和金句。我正在练习让表达更有画面感和深度。
 
 ${oralContext}
@@ -778,25 +763,18 @@ ${oralContext}
 【我的初稿】：
 ${inputVal}
 
-请帮我做三件事（直接上干货，不要讲道理）：
+请帮我做两件事，直接上干货，不要讲道理，不要追问我：
 
-1. 🔍 深度体检（2-3句话说完）：
-   我写的是"正确的废话"还是有真实洞察？读完脑子里能看到具体画面吗？
+1. 🔍 诊断（2句话说完）：
+   我写的有真实洞察还是正确的废话？读完脑子里能看到画面吗？
 
-2. 🛠️ 示范改法：
-   挑出最抽象或最空洞的1-2句，直接给我一个改写示范——加入具体细节或画面。
-   格式：
-   原句：「……」
-   可以改成：「……」
-   改动原因：一句话说明为什么这样改更有画面感/更深刻。
-   （只改最弱的部分，不要重写我的全篇。剩下的我照着这个思路自己改。）
-
-3. ❓ 反转挑战：
-   给我一个反面视角或反例，让我重新审视自己的观点。
+2. 🛠️ 优化版：
+   基于我的原文，只改最空洞抽象的部分，加入具体细节或画面，给我一个完整的改后版本。
+   改动的地方用【】标注，方便我对比学习。
+   不要重写风格，保留我的语气，只加深度。
 
 请直接输出结果。`;
             } else {
-                // Week 4: 结营项目 — 点问题 + 示范改法 + 追问
                 prompt = `你是一位品牌定位教练。我正在完成结营项目——写出"我能帮谁解决什么问题"。
 
 ${oralContext}
@@ -807,21 +785,15 @@ ${oralContext}
 【我写的内容】：
 ${inputVal}
 
-请你模拟一个完全不认识我的陌生人，读完后做三件事：
+请你模拟一个完全不认识我的陌生人，读完后做两件事，不要追问我：
 
-1. 🔍 陌生人体检（2-3句话说完）：
-   读完我知道你在帮什么人吗？能感受到你真的理解他吗？有没有"这说的就是我"的感觉？
+1. 🔍 诊断（2句话说完）：
+   读完我知道你在帮什么人吗？有没有"这说的就是我"的感觉？哪里还模糊？
 
-2. 🛠️ 示范改法：
-   挑出最模糊或最套话的1-2句，直接给我一个改写示范——让描述更具体、更有代入感。
-   格式：
-   原句：「……」
-   可以改成：「……」
-   改动原因：一句话说明为什么这样改更有代入感。
-   （只改最弱的部分，不要重写我的全篇。剩下的我照着这个思路自己改。）
-
-3. ❓ 帮我挖更深：
-   问我一个问题，让我把这个人的画像想得更具体、更真实。
+2. 🛠️ 优化版：
+   基于我的原文，只改最模糊或最套话的部分，让描述更具体、更有代入感，给我一个完整的改后版本。
+   改动的地方用【】标注，方便我对比学习。
+   不要重写风格，保留我的语气，只加细节。
 
 请直接输出结果。`;
             }
@@ -877,57 +849,140 @@ ${inputVal}
         }
 
         function generateVisualReport() {
-            const revVal = document.getElementById('m-revision').value.trim();
-            const inputVal = document.getElementById('m-input').value.trim();
-            
+            var revVal = document.getElementById('m-revision').value.trim();
+            var inputVal = document.getElementById('m-input').value.trim();
+
             if (revVal.length < 2) {
                 if(!confirm("⚠️ 建议把 AI 改好的版本填在【逻辑清晰版】里再生成战报，效果更好哦。\n\n是否坚持只生成初稿？")) return;
             }
 
-            const canvas = document.getElementById('canvas-buffer');
-            const ctx = canvas.getContext('2d');
-            const W = 1080; const H = 1440;
-            
-            let taskTitle = "";
-            for(let p=1; p<=4; p++) { 
-                const d = syllabus[p].days.find(i => i.day === activeDayId); 
+            var canvas = document.getElementById('canvas-buffer');
+            var W = 1080;
+            var FONT = "'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif";
+            var MONO = "'Courier New', Consolas, monospace";
+            var PAD = 80;
+            var maxTextW = W - PAD * 2 - 80;
+            var fontSize = 34;
+            var lineH = 54;
+
+            var taskTitle = "";
+            for(var p=1; p<=4; p++) {
+                var d = syllabus[p].days.find(function(i){ return i.day === activeDayId; });
                 if(d) { taskTitle = d.title; }
             }
 
-            const grd = ctx.createLinearGradient(0, 0, 0, H);
+            var hasComparison = revVal.length > 5 && inputVal.length > 2;
+
+            // === Pass 1: 测量文字高度 ===
+            canvas.width = W; canvas.height = 100;
+            var mCtx = canvas.getContext('2d');
+            mCtx.font = fontSize + "px " + FONT;
+
+            function measureH(text) {
+                var textH = 0;
+                var paragraphs = text.split('\n');
+                paragraphs.forEach(function(para) {
+                    var line = ''; var chars = para.split('');
+                    for (var n = 0; n < chars.length; n++) {
+                        var test = line + chars[n];
+                        if (mCtx.measureText(test).width > maxTextW && n > 0) {
+                            line = chars[n]; textH += lineH;
+                        } else { line = test; }
+                    }
+                    textH += lineH * 1.3;
+                });
+                return textH;
+            }
+
+            var headerH = 460;
+            var footerH = 100;
+            var origH = measureH(inputVal);
+            var revH = hasComparison ? measureH(revVal) : 0;
+            var singleH = revVal.length > 5 ? measureH(revVal) : measureH(inputVal);
+
+            var H;
+            if (hasComparison) {
+                H = headerH + 80 + origH + 60 + 80 + 80 + revH + 60 + footerH;
+            } else {
+                H = headerH + 80 + singleH + 60 + footerH;
+            }
+            H = Math.max(H, 1200);
+
+            // === Pass 2: 正式绘制 ===
+            canvas.width = W; canvas.height = H;
+            var ctx = canvas.getContext('2d');
+
+            // 背景
+            var grd = ctx.createLinearGradient(0, 0, 0, H);
             grd.addColorStop(0, "#0f172a"); grd.addColorStop(1, "#020617");
             ctx.fillStyle = grd; ctx.fillRect(0, 0, W, H);
             ctx.strokeStyle = "#1e293b"; ctx.lineWidth = 2;
-            for(let i=0; i<H; i+=60) { ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(W,i); ctx.stroke(); }
+            for(var i=0; i<H; i+=60) { ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(W,i); ctx.stroke(); }
 
-            ctx.fillStyle = "#3b82f6"; ctx.font = "bold 40px 'Courier New', Consolas, monospace"; ctx.fillText("LOGIC LAB", 60, 100);
-            ctx.fillStyle = "#fff"; ctx.font = "900 200px 'Courier New', Consolas, monospace"; ctx.fillText(activeDayId < 10 ? `0${activeDayId}` : `${activeDayId}`, 50, 320);
-            ctx.fillStyle = "#94a3b8"; ctx.font = "bold 50px 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif"; ctx.fillText(`生活实战 | ${taskTitle}`, 60, 420);
+            // 顶部
+            ctx.fillStyle = "#3b82f6"; ctx.font = "bold 40px " + MONO; ctx.fillText("LOGIC LAB", 60, 100);
+            ctx.fillStyle = "#fff"; ctx.font = "900 200px " + MONO; ctx.fillText(activeDayId < 10 ? "0" + activeDayId : "" + activeDayId, 50, 320);
+            ctx.fillStyle = "#94a3b8"; ctx.font = "bold 50px " + FONT; ctx.fillText("\u751F\u6D3B\u5B9E\u6218 | " + taskTitle, 60, 420);
 
-            const boxY = 480;
-            ctx.fillStyle = "#0f172a"; ctx.fillRect(60, boxY, W-120, H-600);
-            ctx.strokeStyle = "#334155"; ctx.strokeRect(60, boxY, W-120, H-600);
+            var curY = headerH;
 
-            let contentToDraw = "";
-            let label = "";
-            let color = "";
+            if (hasComparison) {
+                // ---- 原始记录 ----
+                var origBoxH = origH + 100;
+                ctx.fillStyle = "rgba(30, 41, 59, 0.5)";
+                ctx.fillRect(PAD, curY, W - PAD*2, origBoxH);
+                ctx.strokeStyle = "#334155"; ctx.lineWidth = 1;
+                ctx.strokeRect(PAD, curY, W - PAD*2, origBoxH);
 
-            if (revVal.length > 5) {
-                label = "🏆 逻辑清晰版";
-                contentToDraw = revVal;
-                color = "#fcd34d"; 
+                ctx.fillStyle = "#94a3b8"; ctx.font = "bold 34px " + FONT;
+                ctx.fillText("\uD83D\uDCDD \u539F\u59CB\u8BB0\u5F55", PAD + 30, curY + 50);
+                ctx.fillStyle = "#94a3b8"; ctx.font = fontSize + "px " + FONT;
+                wrapText(ctx, inputVal, PAD + 30, curY + 100, maxTextW, lineH);
+                curY += origBoxH + 20;
+
+                // ---- 分隔箭头 ----
+                ctx.fillStyle = "#3b82f6"; ctx.font = "bold 36px " + FONT;
+                ctx.textAlign = "center";
+                ctx.fillText("\u2B07\uFE0F  AI \u4F18\u5316\u540E", W / 2, curY + 40);
+                ctx.textAlign = "left";
+                curY += 70;
+
+                // ---- 逻辑清晰版 ----
+                var revBoxH = revH + 100;
+                ctx.fillStyle = "rgba(30, 41, 59, 0.5)";
+                ctx.fillRect(PAD, curY, W - PAD*2, revBoxH);
+                ctx.strokeStyle = "#fcd34d"; ctx.lineWidth = 2;
+                ctx.strokeRect(PAD, curY, W - PAD*2, revBoxH);
+
+                ctx.fillStyle = "#fcd34d"; ctx.font = "bold 34px " + FONT;
+                ctx.fillText("\uD83C\uDFC6 \u903B\u8F91\u6E05\u6670\u7248", PAD + 30, curY + 50);
+                ctx.fillStyle = "#ffffff"; ctx.font = fontSize + "px " + FONT;
+                wrapText(ctx, revVal, PAD + 30, curY + 100, maxTextW, lineH);
+
             } else {
-                label = "📝 原始记录";
-                contentToDraw = inputVal;
-                color = "#e2e8f0"; 
+                // ---- 单版本 ----
+                var singleLabel, singleContent, singleColor, textColor;
+                if (revVal.length > 5) {
+                    singleLabel = "\uD83C\uDFC6 \u903B\u8F91\u6E05\u6670\u7248"; singleContent = revVal; singleColor = "#fcd34d"; textColor = "#ffffff";
+                } else {
+                    singleLabel = "\uD83D\uDCDD \u539F\u59CB\u8BB0\u5F55"; singleContent = inputVal; singleColor = "#e2e8f0"; textColor = "#e2e8f0";
+                }
+                var sBoxH = singleH + 100;
+                ctx.fillStyle = "rgba(30, 41, 59, 0.5)";
+                ctx.fillRect(PAD, curY, W - PAD*2, sBoxH);
+                ctx.strokeStyle = singleColor === "#fcd34d" ? "#fcd34d" : "#334155"; ctx.lineWidth = 1;
+                ctx.strokeRect(PAD, curY, W - PAD*2, sBoxH);
+
+                ctx.fillStyle = singleColor; ctx.font = "bold 34px " + FONT;
+                ctx.fillText(singleLabel, PAD + 30, curY + 50);
+                ctx.fillStyle = textColor; ctx.font = fontSize + "px " + FONT;
+                wrapText(ctx, singleContent, PAD + 30, curY + 100, maxTextW, lineH);
             }
 
-            ctx.fillStyle = color; ctx.font = "bold 36px 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif"; ctx.fillText(label, 100, boxY + 80);
-            ctx.fillStyle = "#ffffff"; ctx.font = "36px 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif"; 
-            wrapText(ctx, contentToDraw, 100, boxY + 160, W-200, 60);
+            // 底部标签
+            ctx.fillStyle = "#3b82f6"; ctx.font = "30px " + FONT;
+            ctx.fillText("#\u7ED3\u6784\u5316\u8868\u8FBE\u751F\u6D3B\u5B9E\u6218", 60, H - 50);
 
-            ctx.fillStyle = "#3b82f6"; ctx.font = "30px 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif"; ctx.fillText("#结构化表达生活实战", 60, H-60);
-            
             document.getElementById('report-img').src = canvas.toDataURL("image/png");
             document.getElementById('report-overlay').classList.add('show');
 
