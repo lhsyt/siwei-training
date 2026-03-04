@@ -903,16 +903,22 @@ ${inputVal}
             }
 
             var headerH = 460;
-            var footerH = 100;
-            var origH = measureH(inputVal);
-            var revH = hasComparison ? measureH(revVal) : 0;
+            var footerH = 120;
+            var labelH = 50;
+            var boxPadTop = 40;
+            var boxPadBot = 40;
+            var barW = 5;
+            var textLeftPad = PAD + barW + 30;
+            var textMaxW = W - textLeftPad - PAD;
+            var origH = hasComparison ? measureH(inputVal) : 0;
+            var revH = (revVal.length > 5) ? measureH(revVal) : 0;
             var singleH = revVal.length > 5 ? measureH(revVal) : measureH(inputVal);
 
             var H;
             if (hasComparison) {
-                H = headerH + 80 + origH + 60 + 30 + 80 + revH + 60 + footerH;
+                H = headerH + labelH + boxPadTop + origH + boxPadBot + 50 + labelH + boxPadTop + revH + boxPadBot + footerH;
             } else {
-                H = headerH + 80 + singleH + 60 + footerH;
+                H = headerH + labelH + boxPadTop + singleH + boxPadBot + footerH;
             }
             H = Math.max(H, 1200);
 
@@ -928,61 +934,51 @@ ${inputVal}
             for(var i=0; i<H; i+=60) { ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(W,i); ctx.stroke(); }
 
             // 顶部
-            ctx.fillStyle = "#3b82f6"; ctx.font = "bold 40px " + MONO; ctx.fillText("LOGIC LAB", 60, 100);
+            ctx.fillStyle = "#ef4444"; ctx.font = "bold 40px " + MONO; ctx.fillText("EVOLUTION LOG", 60, 100);
             ctx.fillStyle = "#fff"; ctx.font = "900 200px " + MONO; ctx.fillText(activeDayId < 10 ? "0" + activeDayId : "" + activeDayId, 50, 320);
             ctx.fillStyle = "#94a3b8"; ctx.font = "bold 50px " + FONT; ctx.fillText("\u751F\u6D3B\u5B9E\u6218 | " + taskTitle, 60, 420);
 
             var curY = headerH;
 
-            if (hasComparison) {
-                // ---- 原始记录 ----
-                var origBoxH = origH + 100;
-                ctx.fillStyle = "rgba(30, 41, 59, 0.5)";
-                ctx.fillRect(PAD, curY, W - PAD*2, origBoxH);
-                ctx.strokeStyle = "#334155"; ctx.lineWidth = 1;
-                ctx.strokeRect(PAD, curY, W - PAD*2, origBoxH);
+            // 绘制内容区块（左侧色条风格）
+            function drawBlock(label, text, barColor, labelColor, textColor) {
+                // 标签
+                ctx.fillStyle = labelColor; ctx.font = "bold 30px " + FONT;
+                ctx.fillText(label, PAD, curY + 36);
+                curY += labelH;
 
-                ctx.fillStyle = "#94a3b8"; ctx.font = "bold 34px " + FONT;
-                ctx.fillText("\uD83D\uDCDD \u539F\u59CB\u8BB0\u5F55", PAD + 30, curY + 50);
-                ctx.fillStyle = "#94a3b8"; ctx.font = fontSize + "px " + FONT;
-                wrapText(ctx, inputVal, PAD + 30, curY + 100, maxTextW, lineH);
-                curY += origBoxH + 30;
+                // 内容框背景
+                var tH = measureH(text);
+                var boxH = boxPadTop + tH + boxPadBot;
+                ctx.fillStyle = "rgba(15, 23, 42, 0.8)";
+                ctx.fillRect(PAD, curY, W - PAD * 2, boxH);
 
-                // ---- 逻辑清晰版 ----
-                var revBoxH = revH + 100;
-                ctx.fillStyle = "rgba(30, 41, 59, 0.5)";
-                ctx.fillRect(PAD, curY, W - PAD*2, revBoxH);
-                ctx.strokeStyle = "#fcd34d"; ctx.lineWidth = 2;
-                ctx.strokeRect(PAD, curY, W - PAD*2, revBoxH);
+                // 左侧色条
+                ctx.fillStyle = barColor;
+                ctx.fillRect(PAD, curY, barW, boxH);
 
-                ctx.fillStyle = "#fcd34d"; ctx.font = "bold 34px " + FONT;
-                ctx.fillText("\uD83C\uDFC6 \u903B\u8F91\u6E05\u6670\u7248", PAD + 30, curY + 50);
-                ctx.fillStyle = "#ffffff"; ctx.font = fontSize + "px " + FONT;
-                wrapText(ctx, revVal, PAD + 30, curY + 100, maxTextW, lineH);
-
-            } else {
-                // ---- 单版本 ----
-                var singleLabel, singleContent, singleColor, textColor;
-                if (revVal.length > 5) {
-                    singleLabel = "\uD83C\uDFC6 \u903B\u8F91\u6E05\u6670\u7248"; singleContent = revVal; singleColor = "#fcd34d"; textColor = "#ffffff";
-                } else {
-                    singleLabel = "\uD83D\uDCDD \u539F\u59CB\u8BB0\u5F55"; singleContent = inputVal; singleColor = "#e2e8f0"; textColor = "#e2e8f0";
-                }
-                var sBoxH = singleH + 100;
-                ctx.fillStyle = "rgba(30, 41, 59, 0.5)";
-                ctx.fillRect(PAD, curY, W - PAD*2, sBoxH);
-                ctx.strokeStyle = singleColor === "#fcd34d" ? "#fcd34d" : "#334155"; ctx.lineWidth = 1;
-                ctx.strokeRect(PAD, curY, W - PAD*2, sBoxH);
-
-                ctx.fillStyle = singleColor; ctx.font = "bold 34px " + FONT;
-                ctx.fillText(singleLabel, PAD + 30, curY + 50);
+                // 文字
                 ctx.fillStyle = textColor; ctx.font = fontSize + "px " + FONT;
-                wrapText(ctx, singleContent, PAD + 30, curY + 100, maxTextW, lineH);
+                wrapText(ctx, text, textLeftPad, curY + boxPadTop + lineH * 0.7, textMaxW, lineH);
+
+                curY += boxH;
+            }
+
+            if (hasComparison) {
+                drawBlock("\uD83D\uDCDD \u539F\u59CB\u8BB0\u5F55 (V1.0)", inputVal, "#475569", "#94a3b8", "#94a3b8");
+                curY += 50;
+                drawBlock("\uD83C\uDFC6 \u8FDB\u5316\u7248\u672C (V2.0)", revVal, "#fcd34d", "#fcd34d", "#ffffff");
+            } else {
+                if (revVal.length > 5) {
+                    drawBlock("\uD83C\uDFC6 \u8FDB\u5316\u7248\u672C (V2.0)", revVal, "#fcd34d", "#fcd34d", "#ffffff");
+                } else {
+                    drawBlock("\uD83D\uDCDD \u539F\u59CB\u8BB0\u5F55 (V1.0)", inputVal, "#475569", "#94a3b8", "#e2e8f0");
+                }
             }
 
             // 底部标签
-            ctx.fillStyle = "#3b82f6"; ctx.font = "30px " + FONT;
-            ctx.fillText("#\u7ED3\u6784\u5316\u8868\u8FBE\u751F\u6D3B\u5B9E\u6218", 60, H - 50);
+            ctx.fillStyle = "#ef4444"; ctx.font = "30px " + FONT;
+            ctx.fillText("#\u601D\u7EF4\u8868\u8FBE\u8FDB\u5316\u8BAD\u7EC3\u8425", 60, H - 50);
 
             document.getElementById('report-img').src = canvas.toDataURL("image/png");
             document.getElementById('report-overlay').classList.add('show');
