@@ -249,9 +249,13 @@
         .homework-area:focus, .revision-area:focus { border-color: var(--accent-blue); }
         .revision-area { background: #1a1500; border-color: rgba(245, 158, 11, 0.3); }
         .revision-area:focus { border-color: var(--gold); }
-        .ai-prompt-box { background: #0d1117; border: 1px dashed #30363d; padding: 16px; border-radius: 12px; margin-top: 20px; display: none; }
-        .ai-prompt-content { font-family: 'Courier New', Consolas, monospace; font-size: 0.8rem; color: #8b949e; white-space: pre-wrap; line-height: 1.5; max-height: 150px; overflow-y: auto; }
-        .btn-ai-gen { background: linear-gradient(90deg, #3b82f6, #8b5cf6); border: none; color: white; padding: 14px; border-radius: 12px; font-size: 0.95rem; font-weight: 700; width: 100%; margin-top: 15px; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; }
+        .btn-ai-gen { background: linear-gradient(90deg, #3b82f6, #8b5cf6); border: none; color: white; padding: 14px; border-radius: 12px; font-size: 0.95rem; font-weight: 700; width: 100%; margin-top: 15px; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; transition: opacity 0.2s; }
+        .btn-ai-gen:disabled { opacity: 0.5; cursor: not-allowed; }
+        .ai-response-box { background: #0d1a2d; border: 1px solid rgba(139,92,246,0.3); padding: 16px; border-radius: 12px; margin-top: 12px; }
+        .ai-response-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .ai-response-content { font-size: 0.88rem; color: #c9d1d9; white-space: pre-wrap; line-height: 1.75; }
+        .btn-fill-v2 { background: var(--gold); color: #000; border: none; padding: 7px 14px; border-radius: 8px; font-size: 0.78rem; font-weight: 800; cursor: pointer; white-space: nowrap; flex-shrink: 0; }
+        .btn-fill-v2:active { opacity: 0.8; }
         .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
         .btn-secondary { background: #21262d; color: #c9d1d9; border: 1px solid #30363d; padding: 10px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.85rem; }
         .btn-report { background: linear-gradient(90deg, #f59e0b, #d97706); color: #000; border: none; padding: 14px; border-radius: 12px; font-size: 1rem; font-weight: 800; width: 100%; margin-top: 30px; cursor: pointer; }
@@ -498,17 +502,16 @@
                 <div class="section-label" style="color: #a78bfa;">🗣️ 初稿 (V1.0)</div>
                 <textarea id="m-input" class="homework-area" placeholder="点击麦克风，口述你的想法..."></textarea>
                 
-                <button class="btn-ai-gen" onclick="generateAiPrompt()">
-                    <span>✨ 呼叫 AI 教练优化逻辑</span>
+                <button class="btn-ai-gen" id="btn-ai-call" onclick="callDeepSeek()">
+                    <span id="ai-btn-text">✨ 呼叫 AI 教练</span>
                 </button>
-                
-                <div class="ai-prompt-box" id="ai-box">
-                    <div style="color:#888; font-size:0.7rem; margin-bottom:8px;">指令已生成：</div>
-                    <div class="ai-prompt-content" id="ai-prompt-text"></div>
-                    <div class="btn-group">
-                        <button class="btn-secondary" onclick="forceCopy(this)">📋 复制指令</button>
+
+                <div class="ai-response-box" id="ai-response-box" style="display:none;">
+                    <div class="ai-response-header">
+                        <span style="color:#a78bfa; font-size:0.72rem; font-weight:800; letter-spacing:1px;">🤖 AI 教练反馈</span>
+                        <button id="btn-fill-v2" class="btn-fill-v2" onclick="fillRevision()" style="display:none;">填入 V2.0 ↓</button>
                     </div>
-                    <div style="color:#666; font-size:0.65rem; margin-top:6px; text-align:center;">复制后打开豆包 APP → 新对话 → 粘贴发送</div>
+                    <div id="ai-response-text" class="ai-response-content"></div>
                 </div>
 
                 <div class="section-label" style="color: var(--gold); margin-top:30px;">🏆 大师成品 (V2.0)</div>
@@ -915,7 +918,7 @@
             inputArea.value = userInputs[dayId] || data.template;
             revArea.value = userRevisions[dayId] || "";
 
-            document.getElementById('ai-box').style.display = 'none';
+            document.getElementById('ai-response-box').style.display = 'none';
             document.getElementById('modal').classList.add('open');
         }
 
@@ -935,6 +938,105 @@
             document.getElementById('save-msg').innerText = "成品已保存";
         });
 
+        // ===== DeepSeek API =====
+        var DS_KEY = 'sk-d03d56a9c24e4fb89a2df0e2abe082e7';
+        var lastAiResponse = '';
+
+        function buildPrompt(inputVal, dayData) {
+            const taskDesc = dayData.task.replace(/\n/g, " ");
+            const oralContext = `注意：以下内容是我口述后转文字的，可能有口语化表达、重复、语序混乱——这些正是我需要训练的地方。请你评估的是我的思维逻辑和表达结构，不是文笔。`;
+            let prompt = '';
+
+            if (activeWeekId === 1) {
+                prompt = `你是一位结构化表达教练。我正在练习用SCQA框架说清楚一件事。\n\n${oralContext}\n\n【今日场景】：${dayData.title}\n【任务要求】：${taskDesc}\n\n【我的初稿】：\n${inputVal}\n\n你必须完成两个任务，缺一不可。不要讲道理，不要追问我。\n\n任务一：评分（必须输出，不能跳过）\n请对我的初稿打分，满分5分，严格评分不要客气。格式如下：\nS 情境清晰度：X/5分 — 一句话说原因\nC 冲突力度：X/5分 — 一句话说原因\nA 方案具体度：X/5分 — 一句话说原因\n总分：X/15分\n\n任务二：优化版\n基于我的原文，只改需要改的部分，给我一个完整的改后版本。\n改动的地方用【】标注，方便我对比学习。\n不要重写风格，保留我的语气，只调结构。`;
+            } else if (activeWeekId === 2) {
+                prompt = `你是一位结构化表达教练。我正在练习让表达更有逻辑、更有条理。\n\n${oralContext}\n\n【今日场景】：${dayData.title}\n【任务要求】：${taskDesc}\n\n【我的初稿】：\n${inputVal}\n\n你必须完成两个任务，缺一不可。不要讲道理，不要追问我。\n\n任务一：评分（必须输出，不能跳过）\n请对我的初稿打分，满分5分，严格评分不要客气。格式如下：\n结构完整度：X/5分 — 一句话说原因\n逻辑通顺度：X/5分 — 一句话说原因\n信息精简度：X/5分 — 一句话说原因\n总分：X/15分\n\n任务二：优化版\n基于我的原文，只改逻辑不顺或废话的部分，给我一个完整的改后版本。\n改动的地方用【】标注，方便我对比学习。\n不要重写风格，保留我的语气，只调逻辑。`;
+            } else if (activeWeekId === 3) {
+                prompt = `你是一位表达教练，擅长帮人提炼洞察和金句。我正在练习让表达更有画面感和深度。\n\n${oralContext}\n\n【今日场景】：${dayData.title}\n【任务要求】：${taskDesc}\n\n【我的初稿】：\n${inputVal}\n\n你必须完成两个任务，缺一不可。不要讲道理，不要追问我。\n\n任务一：评分（必须输出，不能跳过）\n请对我的初稿打分，满分5分，严格评分不要客气。格式如下：\n画面感：X/5分 — 一句话说原因\n洞察深度：X/5分 — 一句话说原因\n表达力：X/5分 — 一句话说原因\n总分：X/15分\n\n任务二：优化版\n基于我的原文，只改最空洞抽象的部分，加入具体细节或画面，给我一个完整的改后版本。\n改动的地方用【】标注，方便我对比学习。\n不要重写风格，保留我的语气，只加深度。`;
+            } else {
+                prompt = `你是一位品牌定位教练。我正在完成结营项目——写出"我能帮谁解决什么问题"。\n\n${oralContext}\n\n【当前步骤】：${dayData.title}\n【任务要求】：${taskDesc}\n\n【我写的内容】：\n${inputVal}\n\n请你模拟一个完全不认识我的陌生人。你必须完成两个任务，缺一不可。不要追问我。\n\n任务一：评分（必须输出，不能跳过）\n请对我写的内容打分，满分5分，严格评分不要客气。格式如下：\n人群清晰度：X/5分 — 一句话说原因\n代入感：X/5分 — 一句话说原因\n可信度：X/5分 — 一句话说原因\n总分：X/15分\n\n任务二：优化版\n基于我的原文，只改最模糊或最套话的部分，让描述更具体、更有代入感，给我一个完整的改后版本。\n改动的地方用【】标注，方便我对比学习。\n不要重写风格，保留我的语气，只加细节。`;
+            }
+            return prompt;
+        }
+
+        async function callDeepSeek() {
+            const inputVal = document.getElementById('m-input').value.trim();
+            const dayData = syllabus[activeWeekId].days.find(d => d.day === activeDayId);
+            const templateText = (dayData.template || '').trim();
+
+            if (!inputVal || inputVal.length < 5 || inputVal === templateText) {
+                alert('⚠️ 请先写点东西再呼叫 AI 教练！');
+                return;
+            }
+
+            const prompt = buildPrompt(inputVal, dayData);
+            const btn = document.getElementById('btn-ai-call');
+            const btnText = document.getElementById('ai-btn-text');
+            const responseBox = document.getElementById('ai-response-box');
+            const responseText = document.getElementById('ai-response-text');
+
+            btn.disabled = true;
+            btnText.textContent = '🤖 AI 思考中...';
+            responseBox.style.display = 'block';
+            responseText.textContent = '';
+            document.getElementById('btn-fill-v2').style.display = 'none';
+            lastAiResponse = '';
+
+            try {
+                const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + DS_KEY },
+                    body: JSON.stringify({
+                        model: 'deepseek-chat',
+                        messages: [{ role: 'user', content: prompt }],
+                        max_tokens: 1200,
+                        stream: true
+                    })
+                });
+
+                const reader = res.body.getReader();
+                const decoder = new TextDecoder();
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    const lines = decoder.decode(value).split('\n');
+                    for (const line of lines) {
+                        if (!line.startsWith('data: ') || line.includes('[DONE]')) continue;
+                        try {
+                            const delta = JSON.parse(line.slice(6)).choices?.[0]?.delta?.content || '';
+                            lastAiResponse += delta;
+                            responseText.textContent = lastAiResponse;
+                        } catch(e) {}
+                    }
+                }
+                document.getElementById('btn-fill-v2').style.display = 'block';
+            } catch(e) {
+                responseText.textContent = '网络出错，请重试 😢';
+            } finally {
+                btn.disabled = false;
+                btnText.textContent = '✨ 重新优化';
+                setTimeout(() => responseBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);
+            }
+        }
+
+        function fillRevision() {
+            let fillText = lastAiResponse;
+            // 尝试只提取优化版（任务二之后的部分）
+            const markers = ['任务二：优化版', '任务二:优化版', '**任务二**', '任务二：\n', '优化版\n---'];
+            for (const m of markers) {
+                const idx = lastAiResponse.indexOf(m);
+                if (idx !== -1) { fillText = lastAiResponse.slice(idx + m.length).trim(); break; }
+            }
+            const revArea = document.getElementById('m-revision');
+            revArea.value = fillText;
+            userRevisions[activeDayId] = fillText;
+            LS.set(DB_KEY_REV, JSON.stringify(userRevisions));
+            scheduleSync();
+            document.getElementById('save-msg').innerText = '进化版已填入 ✓';
+            revArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        // ===== 旧版 generateAiPrompt（保留供兼容，实际已不调用）=====
         function generateAiPrompt() {
             const inputVal = document.getElementById('m-input').value;
             const dayData = syllabus[activeWeekId].days.find(d => d.day === activeDayId);
