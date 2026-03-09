@@ -256,6 +256,9 @@
         .ai-response-content { font-size: 0.88rem; color: #c9d1d9; white-space: pre-wrap; line-height: 1.75; }
         .btn-fill-v2 { background: var(--gold); color: #000; border: none; padding: 7px 14px; border-radius: 8px; font-size: 0.78rem; font-weight: 800; cursor: pointer; white-space: nowrap; flex-shrink: 0; }
         .btn-fill-v2:active { opacity: 0.8; }
+        .prompt-toggle { background: none; border: none; color: #444; font-size: 0.7rem; cursor: pointer; padding: 8px 0 0; text-align: left; display: block; letter-spacing: 0.5px; }
+        .prompt-toggle:hover { color: #777; }
+        .prompt-reveal { display: none; margin-top: 8px; background: #0a0a0a; border: 1px solid #1e1e1e; border-radius: 8px; padding: 12px 14px; font-size: 0.72rem; color: #555; line-height: 1.8; white-space: pre-wrap; font-family: 'SF Mono', 'Consolas', monospace; }
         .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
         .btn-secondary { background: #21262d; color: #c9d1d9; border: 1px solid #30363d; padding: 10px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.85rem; }
         .btn-report { background: linear-gradient(90deg, #f59e0b, #d97706); color: #000; border: none; padding: 14px; border-radius: 12px; font-size: 1rem; font-weight: 800; width: 100%; margin-top: 30px; cursor: pointer; }
@@ -512,6 +515,8 @@
                         <button id="btn-fill-v2" class="btn-fill-v2" onclick="fillRevision()" style="display:none;">填入 V2.0 ↓</button>
                     </div>
                     <div id="ai-response-text" class="ai-response-content"></div>
+                    <button class="prompt-toggle" id="btn-show-prompt" onclick="togglePrompt()" style="display:none;">📋 查看本次提示词 ›</button>
+                    <div class="prompt-reveal" id="prompt-reveal"></div>
                 </div>
 
                 <div class="section-label" style="color: var(--gold); margin-top:30px;">🏆 大师成品 (V2.0)</div>
@@ -941,6 +946,7 @@
         // ===== DeepSeek API =====
         var DS_KEY = 'sk-d03d56a9c24e4fb89a2df0e2abe082e7';
         var lastAiResponse = '';
+        var lastPrompt = '';
 
         function buildPrompt(inputVal, dayData) {
             const taskDesc = dayData.task.replace(/\n/g, " ");
@@ -959,6 +965,19 @@
             return prompt;
         }
 
+        function togglePrompt() {
+            const box = document.getElementById('prompt-reveal');
+            const btn = document.getElementById('btn-show-prompt');
+            if (box.style.display === 'block') {
+                box.style.display = 'none';
+                btn.textContent = '📋 查看本次提示词 ›';
+            } else {
+                box.style.display = 'block';
+                box.textContent = lastPrompt;
+                btn.textContent = '📋 收起提示词 ∧';
+            }
+        }
+
         async function callDeepSeek() {
             const inputVal = document.getElementById('m-input').value.trim();
             const dayData = syllabus[activeWeekId].days.find(d => d.day === activeDayId);
@@ -970,6 +989,7 @@
             }
 
             const prompt = buildPrompt(inputVal, dayData);
+            lastPrompt = prompt;
             const btn = document.getElementById('btn-ai-call');
             const btnText = document.getElementById('ai-btn-text');
             const responseBox = document.getElementById('ai-response-box');
@@ -980,6 +1000,8 @@
             responseBox.style.display = 'block';
             responseText.textContent = '';
             document.getElementById('btn-fill-v2').style.display = 'none';
+            document.getElementById('btn-show-prompt').style.display = 'none';
+            document.getElementById('prompt-reveal').style.display = 'none';
             lastAiResponse = '';
 
             try {
@@ -1010,6 +1032,7 @@
                     }
                 }
                 document.getElementById('btn-fill-v2').style.display = 'block';
+                document.getElementById('btn-show-prompt').style.display = 'block';
             } catch(e) {
                 responseText.textContent = '网络出错，请重试 😢';
             } finally {
