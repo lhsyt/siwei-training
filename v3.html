@@ -341,6 +341,50 @@
         .login-forgot { margin-top: 14px; font-size: 0.75rem; color: #555; cursor: pointer; }
         .login-forgot:hover { color: var(--accent-blue); }
         .login-hint { margin-top: 18px; font-size: 0.72rem; color: #444; line-height: 1.6; }
+        /* 用户信息栏 */
+        #user-bar {
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 10px 16px;
+            margin-bottom: 20px;
+            font-size: 0.75rem;
+            color: #666;
+        }
+        #user-bar.visible { display: flex; }
+        .user-bar-email {
+            color: #aaa;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 180px;
+        }
+        .user-bar-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-shrink: 0;
+        }
+        .user-bar-days {
+            color: var(--accent-blue);
+            font-weight: 700;
+            font-size: 0.78rem;
+        }
+        .user-bar-pct {
+            background: rgba(59,130,246,0.12);
+            border: 1px solid rgba(59,130,246,0.25);
+            color: var(--accent-blue);
+            font-weight: 700;
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-size: 0.72rem;
+        }
+
         /* 同步状态指示器 */
         #sync-status {
             position: fixed; bottom: 76px; right: 14px;
@@ -403,7 +447,7 @@
                    oninput="this.value=this.value.toUpperCase()">
             <button class="login-btn" onclick="doSignUp()">注册 →</button>
             <div class="login-error" id="signup-error"></div>
-            <div class="login-hint">邀请码由舟舟在群里发放<br>注册后用邮箱+密码登录，数据永久保存</div>
+            <div class="login-hint">邀请码由舟舟私发<br>注册后用邮箱+密码登录，数据永久保存<br><span style="color:#d4af37">没有邮箱？用手机号@qq.com，例如 13812345678@qq.com</span><br><span style="color:#555">用手机号注册的同学，忘记密码请联系舟舟重置</span></div>
         </div>
     </div>
 </div>
@@ -415,6 +459,16 @@
 </div>
 
     <div class="container" id="main-content">
+
+        <!-- 用户信息栏（登录后显示） -->
+        <div id="user-bar">
+            <span class="user-bar-email" id="user-bar-email">—</span>
+            <div class="user-bar-right">
+                <span class="user-bar-days" id="user-bar-days">0 天</span>
+                <span class="user-bar-pct" id="user-bar-pct">0%</span>
+            </div>
+        </div>
+
         <div class="hero-section">
             <div class="hero-subtitle">21-DAY EVOLUTION</div>
             <div class="hero-title">
@@ -703,12 +757,17 @@
             if (session && session.user) {
                 currentUserId = session.user.id;
                 document.getElementById('login-overlay').style.display = 'none';
+                // 显示用户信息栏
+                var email = session.user.email || '';
+                document.getElementById('user-bar-email').textContent = email;
+                document.getElementById('user-bar').classList.add('visible');
                 if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
                     loadFromCloud();
                 }
             } else {
                 currentUserId = null;
                 document.getElementById('login-overlay').style.display = 'flex';
+                document.getElementById('user-bar').classList.remove('visible');
             }
         });
 
@@ -905,6 +964,8 @@
             const pct = Math.round((completedDays.length / totalDays) * 100);
             document.getElementById('progress-bar').style.width = pct + '%';
             document.getElementById('progress-text').innerText = pct + '%';
+            document.getElementById('user-bar-days').textContent = completedDays.length + ' 天';
+            document.getElementById('user-bar-pct').textContent = pct + '%';
         }
 
         function openModal(week, dayId) {
@@ -944,6 +1005,9 @@
         });
 
         // ===== DeepSeek API =====
+        // ⚠️ P0安全警告：这个 Key 对所有访问者可见（前端 JS 无法加密隐藏）
+        // 立即行动：1) 去 DeepSeek 平台吊销旧 Key  2) 生成新 Key 填在下面
+        // 长期方案：改用 Cloudflare Worker 做中转，Key 放在 Worker 环境变量里
         var DS_KEY = 'sk-d03d56a9c24e4fb89a2df0e2abe082e7';
         var lastAiResponse = '';
         var lastPrompt = '';
@@ -1057,130 +1121,6 @@
             scheduleSync();
             document.getElementById('save-msg').innerText = '进化版已填入 ✓';
             revArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-
-        // ===== 旧版 generateAiPrompt（保留供兼容，实际已不调用）=====
-        function generateAiPrompt() {
-            const inputVal = document.getElementById('m-input').value;
-            const dayData = syllabus[activeWeekId].days.find(d => d.day === activeDayId);
-            const templateText = dayData.template.trim();
-            const currentText = inputVal ? inputVal.trim() : "";
-
-            if (!currentText || currentText.length < 5 || currentText === templateText) {
-                alert("⚠️ 请先写点东西（支持语音输入）！\n不能交白卷哦。");
-                return;
-            }
-
-            let prompt = '';
-            const taskDesc = dayData.task.replace(/\n/g, " ");
-
-            // 通用上下文：口述训练，评的是思维逻辑
-            const oralContext = `注意：以下内容是我口述后转文字的，可能有口语化表达、重复、语序混乱——这些正是我需要训练的地方。请你评估的是我的思维逻辑和表达结构，不是文笔。`;
-
-            if (activeWeekId === 1) {
-                prompt = `你是一位结构化表达教练。我正在练习用SCQA框架说清楚一件事。
-
-${oralContext}
-
-【今日场景】：${dayData.title}
-【任务要求】：${taskDesc}
-
-【我的初稿】：
-${inputVal}
-
-你必须完成两个任务，缺一不可。不要讲道理，不要追问我。
-
-任务一：评分（必须输出，不能跳过）
-请对我的初稿打分，满分5分，严格评分不要客气。格式如下：
-S 情境清晰度：X/5分 — 一句话说原因
-C 冲突力度：X/5分 — 一句话说原因
-A 方案具体度：X/5分 — 一句话说原因
-总分：X/15分
-
-任务二：优化版
-基于我的原文，只改需要改的部分，给我一个完整的改后版本。
-改动的地方用【】标注，方便我对比学习。
-不要重写风格，保留我的语气，只调结构。`;
-            } else if (activeWeekId === 2) {
-                prompt = `你是一位结构化表达教练。我正在练习让表达更有逻辑、更有条理。
-
-${oralContext}
-
-【今日场景】：${dayData.title}
-【任务要求】：${taskDesc}
-
-【我的初稿】：
-${inputVal}
-
-你必须完成两个任务，缺一不可。不要讲道理，不要追问我。
-
-任务一：评分（必须输出，不能跳过）
-请对我的初稿打分，满分5分，严格评分不要客气。格式如下：
-结构完整度：X/5分 — 一句话说原因
-逻辑通顺度：X/5分 — 一句话说原因
-信息精简度：X/5分 — 一句话说原因
-总分：X/15分
-
-任务二：优化版
-基于我的原文，只改逻辑不顺或废话的部分，给我一个完整的改后版本。
-改动的地方用【】标注，方便我对比学习。
-不要重写风格，保留我的语气，只调逻辑。`;
-            } else if (activeWeekId === 3) {
-                prompt = `你是一位表达教练，擅长帮人提炼洞察和金句。我正在练习让表达更有画面感和深度。
-
-${oralContext}
-
-【今日场景】：${dayData.title}
-【任务要求】：${taskDesc}
-
-【我的初稿】：
-${inputVal}
-
-你必须完成两个任务，缺一不可。不要讲道理，不要追问我。
-
-任务一：评分（必须输出，不能跳过）
-请对我的初稿打分，满分5分，严格评分不要客气。格式如下：
-画面感：X/5分 — 一句话说原因
-洞察深度：X/5分 — 一句话说原因
-表达力：X/5分 — 一句话说原因
-总分：X/15分
-
-任务二：优化版
-基于我的原文，只改最空洞抽象的部分，加入具体细节或画面，给我一个完整的改后版本。
-改动的地方用【】标注，方便我对比学习。
-不要重写风格，保留我的语气，只加深度。`;
-            } else {
-                prompt = `你是一位品牌定位教练。我正在完成结营项目——写出"我能帮谁解决什么问题"。
-
-${oralContext}
-
-【当前步骤】：${dayData.title}
-【任务要求】：${taskDesc}
-
-【我写的内容】：
-${inputVal}
-
-请你模拟一个完全不认识我的陌生人。你必须完成两个任务，缺一不可。不要追问我。
-
-任务一：评分（必须输出，不能跳过）
-请对我写的内容打分，满分5分，严格评分不要客气。格式如下：
-人群清晰度：X/5分 — 一句话说原因
-代入感：X/5分 — 一句话说原因
-可信度：X/5分 — 一句话说原因
-总分：X/15分
-
-任务二：优化版
-基于我的原文，只改最模糊或最套话的部分，让描述更具体、更有代入感，给我一个完整的改后版本。
-改动的地方用【】标注，方便我对比学习。
-不要重写风格，保留我的语气，只加细节。`;
-            }
-
-            document.getElementById('ai-prompt-text').innerText = prompt;
-            document.getElementById('ai-box').style.display = 'block';
-            setTimeout(() => {
-                const modalBody = document.querySelector('.modal-body');
-                modalBody.scrollTo({ top: modalBody.scrollHeight, behavior: 'smooth' });
-            }, 100);
         }
 
         function forceCopy(btnElement) {
@@ -1394,6 +1334,9 @@ ${inputVal}
 
         function closeReport() { document.getElementById('report-overlay').classList.remove('show'); }
 
+        // ESC 键关闭战报弹窗
+        document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeReport(); });
+
         function downloadReportImg() {
             var img = document.getElementById('report-img');
             var link = document.createElement('a');
@@ -1438,7 +1381,22 @@ ${inputVal}
                     const cleanCode = code.replace("LIFE_BACKUP::", "");
                     const jsonString = decodeURIComponent(atob(cleanCode));
                     const data = JSON.parse(jsonString);
-                    if (confirm("确定要恢复数据吗？当前进度将被覆盖。")) {
+                    // 校验数据结构基本完整性
+                    if (!Array.isArray(data.prog) && data.prog !== undefined) { alert("❌ 备份数据结构异常，取消恢复"); return; }
+                    if (confirm("确定要恢复数据吗？\n\n⚠️ 当前进度将被覆盖，建议先导出当前备份。")) {
+                        // 先备份当前数据
+                        const currentBackup = { prog: completedDays, data: userInputs, rev: userRevisions };
+                        const currentStr = "LIFE_BACKUP::" + btoa(encodeURIComponent(JSON.stringify(currentBackup)));
+                        try {
+                            if (navigator.clipboard && navigator.clipboard.writeText) {
+                                navigator.clipboard.writeText(currentStr);
+                            } else {
+                                const ta = document.createElement('textarea');
+                                ta.value = currentStr; ta.style.position = 'fixed'; ta.style.left = '-9999px';
+                                document.body.appendChild(ta); ta.select(); document.execCommand('copy');
+                                document.body.removeChild(ta);
+                            }
+                        } catch(e) {}
                         completedDays = data.prog || [];
                         userInputs = data.data || {};
                         userRevisions = data.rev || {};
@@ -1447,23 +1405,36 @@ ${inputVal}
                         LS.set(DB_KEY_REV, JSON.stringify(userRevisions));
                         scheduleSync();
                         init();
-                        alert("🎉 数据已成功恢复！");
+                        alert("🎉 数据已成功恢复！（原数据已备份到剪贴板）");
                     }
                 } else { alert("❌ 口令格式错误"); }
-            } catch (e) { alert("❌ 数据损坏"); }
+            } catch (e) { alert("❌ 数据损坏，无法恢复"); }
         }
 
         async function resetData() {
-            if(confirm("⚠️ 警告：确定要清空所有进度重新开始吗？\n\n云端数据也会被清除，此操作无法撤销！")) {
-                // 清除云端数据
-                if (currentUserId) {
-                    await _supa.from('progress').delete().eq('user_id', currentUserId);
+            if (!confirm("⚠️ 第一步确认：确定要清空所有进度重新开始吗？\n\n下一步会先帮你备份当前数据。")) return;
+            // 强制先备份当前数据
+            const backupData = { prog: completedDays, data: userInputs, rev: userRevisions };
+            const backupStr = "LIFE_BACKUP::" + btoa(encodeURIComponent(JSON.stringify(backupData)));
+            try {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(backupStr);
+                } else {
+                    const ta = document.createElement('textarea');
+                    ta.value = backupStr; ta.style.position = 'fixed'; ta.style.left = '-9999px';
+                    document.body.appendChild(ta); ta.select(); document.execCommand('copy');
+                    document.body.removeChild(ta);
                 }
-                LS.remove(DB_KEY_PROG);
-                LS.remove(DB_KEY_INPUT);
-                LS.remove(DB_KEY_REV);
-                location.reload();
+            } catch(e) {}
+            if (!confirm("✅ 当前数据已备份到剪贴板（可粘贴保存）。\n\n第二步确认：真的要清空所有数据？此操作无法撤销。")) return;
+            // 清除云端数据
+            if (currentUserId) {
+                await _supa.from('progress').delete().eq('user_id', currentUserId);
             }
+            LS.remove(DB_KEY_PROG);
+            LS.remove(DB_KEY_INPUT);
+            LS.remove(DB_KEY_REV);
+            location.reload();
         }
 
         function closeModal(event) {
