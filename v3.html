@@ -262,8 +262,21 @@
         .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
         .btn-secondary { background: #21262d; color: #c9d1d9; border: 1px solid #30363d; padding: 10px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.85rem; }
         .btn-report { background: linear-gradient(90deg, #f59e0b, #d97706); color: #000; border: none; padding: 14px; border-radius: 12px; font-size: 1rem; font-weight: 800; width: 100%; margin-top: 30px; cursor: pointer; }
-        .report-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 200; display: none; flex-direction: column; align-items: center; justify-content: center; }
+        .report-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 200; display: none; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; }
         .report-overlay.show { display: flex; }
+        .report-overlay .report-img, .report-overlay .report-tip, .report-overlay #btn-download-img, .report-overlay .report-close { cursor: auto; }
+        /* 恢复进度弹窗 */
+        .restore-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 300; display: none; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; }
+        .restore-overlay.show { display: flex; }
+        .restore-modal { background: #161b22; border: 1px solid #30363d; border-radius: 16px; padding: 24px; max-width: 480px; width: 100%; }
+        .restore-modal h3 { color: #fff; font-size: 1rem; margin-bottom: 8px; }
+        .restore-modal p { color: #6e7681; font-size: 0.82rem; margin-bottom: 14px; line-height: 1.6; }
+        .restore-modal textarea { width: 100%; background: #0d1117; border: 1px solid #30363d; border-radius: 8px; color: #c9d1d9; font-size: 0.8rem; padding: 10px; resize: vertical; min-height: 90px; font-family: monospace; box-sizing: border-box; }
+        .restore-modal textarea:focus { outline: none; border-color: #58a6ff; }
+        .restore-modal-btns { display: flex; gap: 10px; margin-top: 14px; }
+        .restore-modal-btns button { flex: 1; padding: 10px; border-radius: 8px; font-size: 0.85rem; font-weight: 700; cursor: pointer; border: none; }
+        .restore-cancel { background: #21262d; color: #c9d1d9; }
+        .restore-confirm { background: var(--gold); color: #000; }
         .report-img { max-width: 90%; max-height: 80vh; border-radius: 12px; border: 1px solid #333; }
         .report-close { position: absolute; top: 20px; right: 20px; color: #fff; font-size: 30px; cursor: pointer; z-index: 201; }
         .report-tip { color: var(--gold); margin-top: 20px; font-size: 0.8rem; font-weight: 600; animation: pulse 2s infinite; }
@@ -585,12 +598,26 @@
         </div>
     </div>
 
-    <div class="report-overlay" id="report-overlay">
-        <div class="report-close" onclick="closeReport()">×</div>
-        <img id="report-img" class="report-img" alt="Report">
-        <div class="report-tip">长按图片保存 -> 秀出你的逻辑</div>
-        <button id="btn-download-img" onclick="downloadReportImg()" style="margin-top:12px;padding:10px 28px;background:var(--gold);color:#000;border:none;border-radius:8px;font-size:0.85rem;font-weight:700;cursor:pointer;">📥 保存图片到手机</button>
+    <div class="report-overlay" id="report-overlay" onclick="closeReport()">
+        <div class="report-close" onclick="event.stopPropagation(); closeReport()">×</div>
+        <img id="report-img" class="report-img" alt="Report" onclick="event.stopPropagation()">
+        <div class="report-tip" onclick="event.stopPropagation()">长按图片保存 -> 秀出你的逻辑</div>
+        <button id="btn-download-img" onclick="event.stopPropagation(); downloadReportImg()" style="margin-top:12px;padding:10px 28px;background:var(--gold);color:#000;border:none;border-radius:8px;font-size:0.85rem;font-weight:700;cursor:pointer;">📥 保存图片到手机</button>
     </div>
+
+    <!-- 恢复进度弹窗 -->
+    <div class="restore-overlay" id="restore-overlay" onclick="closeRestoreModal()">
+        <div class="restore-modal" onclick="event.stopPropagation()">
+            <h3>📥 恢复进度</h3>
+            <p>粘贴你的备份口令（以 LIFE_BACKUP:: 开头）<br>恢复前会自动备份当前进度到剪贴板。</p>
+            <textarea id="restore-input" placeholder="粘贴备份口令..."></textarea>
+            <div class="restore-modal-btns">
+                <button class="restore-cancel" onclick="closeRestoreModal()">取消</button>
+                <button class="restore-confirm" onclick="confirmRestore()">确认恢复</button>
+            </div>
+        </div>
+    </div>
+
     <canvas id="canvas-buffer" width="1080" height="1440"></canvas>
 
     <script>
@@ -686,7 +713,16 @@
                     used: true, used_by: authData.user.id, used_at: new Date().toISOString()
                 }).eq('code', code);
             }
-            // 成功后由 onAuthStateChange 接管
+
+            // 注册成功后自动登录，无需用户手动切换到登录页
+            errEl.style.color = '#10b981';
+            errEl.textContent = '注册成功，正在登录...';
+            var { error: signInErr } = await _supa.auth.signInWithPassword({ email, password });
+            if (signInErr) {
+                errEl.style.color = 'var(--danger)';
+                errEl.textContent = '注册成功！请切换到「登录」标签手动登录。';
+            }
+            // 登录成功后由 onAuthStateChange 接管
         }
 
         async function doForgotPassword() {
@@ -1374,8 +1410,18 @@
         }
 
         function pasteDataString() {
-            const code = prompt("请粘贴您的备份口令 (以 LIFE_BACKUP:: 开头)");
-            if (!code) return;
+            document.getElementById('restore-input').value = '';
+            document.getElementById('restore-overlay').classList.add('show');
+            setTimeout(() => document.getElementById('restore-input').focus(), 150);
+        }
+
+        function closeRestoreModal() {
+            document.getElementById('restore-overlay').classList.remove('show');
+        }
+
+        function confirmRestore() {
+            const code = document.getElementById('restore-input').value.trim();
+            if (!code) { alert('请先粘贴备份口令'); return; }
             try {
                 if (code.startsWith("LIFE_BACKUP::")) {
                     const cleanCode = code.replace("LIFE_BACKUP::", "");
@@ -1383,31 +1429,30 @@
                     const data = JSON.parse(jsonString);
                     // 校验数据结构基本完整性
                     if (!Array.isArray(data.prog) && data.prog !== undefined) { alert("❌ 备份数据结构异常，取消恢复"); return; }
-                    if (confirm("确定要恢复数据吗？\n\n⚠️ 当前进度将被覆盖，建议先导出当前备份。")) {
-                        // 先备份当前数据
-                        const currentBackup = { prog: completedDays, data: userInputs, rev: userRevisions };
-                        const currentStr = "LIFE_BACKUP::" + btoa(encodeURIComponent(JSON.stringify(currentBackup)));
-                        try {
-                            if (navigator.clipboard && navigator.clipboard.writeText) {
-                                navigator.clipboard.writeText(currentStr);
-                            } else {
-                                const ta = document.createElement('textarea');
-                                ta.value = currentStr; ta.style.position = 'fixed'; ta.style.left = '-9999px';
-                                document.body.appendChild(ta); ta.select(); document.execCommand('copy');
-                                document.body.removeChild(ta);
-                            }
-                        } catch(e) {}
-                        completedDays = data.prog || [];
-                        userInputs = data.data || {};
-                        userRevisions = data.rev || {};
-                        LS.set(DB_KEY_PROG, JSON.stringify(completedDays));
-                        LS.set(DB_KEY_INPUT, JSON.stringify(userInputs));
-                        LS.set(DB_KEY_REV, JSON.stringify(userRevisions));
-                        scheduleSync();
-                        init();
-                        alert("🎉 数据已成功恢复！（原数据已备份到剪贴板）");
-                    }
-                } else { alert("❌ 口令格式错误"); }
+                    closeRestoreModal();
+                    // 先备份当前数据到剪贴板
+                    const currentBackup = { prog: completedDays, data: userInputs, rev: userRevisions };
+                    const currentStr = "LIFE_BACKUP::" + btoa(encodeURIComponent(JSON.stringify(currentBackup)));
+                    try {
+                        if (navigator.clipboard && navigator.clipboard.writeText) {
+                            navigator.clipboard.writeText(currentStr);
+                        } else {
+                            const ta = document.createElement('textarea');
+                            ta.value = currentStr; ta.style.position = 'fixed'; ta.style.left = '-9999px';
+                            document.body.appendChild(ta); ta.select(); document.execCommand('copy');
+                            document.body.removeChild(ta);
+                        }
+                    } catch(e) {}
+                    completedDays = data.prog || [];
+                    userInputs = data.data || {};
+                    userRevisions = data.rev || {};
+                    LS.set(DB_KEY_PROG, JSON.stringify(completedDays));
+                    LS.set(DB_KEY_INPUT, JSON.stringify(userInputs));
+                    LS.set(DB_KEY_REV, JSON.stringify(userRevisions));
+                    scheduleSync();
+                    init();
+                    alert("🎉 数据已成功恢复！（原数据已备份到剪贴板）");
+                } else { alert("❌ 口令格式错误，需以 LIFE_BACKUP:: 开头"); }
             } catch (e) { alert("❌ 数据损坏，无法恢复"); }
         }
 
