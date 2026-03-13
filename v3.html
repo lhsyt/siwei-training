@@ -1045,9 +1045,8 @@
 
         // ===== DeepSeek API =====
         // ⚠️ P0安全警告：这个 Key 对所有访问者可见（前端 JS 无法加密隐藏）
-        // 立即行动：1) 去 DeepSeek 平台吊销旧 Key  2) 生成新 Key 填在下面
-        // 长期方案：改用 Cloudflare Worker 做中转，Key 放在 Worker 环境变量里
-        var DS_KEY = 'sk-d03d56a9c24e4fb89a2df0e2abe082e7';
+        // API 请求通过 Cloudflare Worker 中转，Key 存在 Worker 环境变量里，不暴露在前端
+        var WORKER_URL = 'https://deepseek-proxy.canoe2580.workers.dev';
         var lastAiResponse = '';
         var lastPrompt = '';
 
@@ -1108,9 +1107,9 @@
             lastAiResponse = '';
 
             try {
-                const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+                const res = await fetch(WORKER_URL, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + DS_KEY },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         model: 'deepseek-chat',
                         messages: [{ role: 'user', content: prompt }],
